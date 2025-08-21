@@ -45,8 +45,9 @@
               />
             </div>
           </NumberFlowGroup>
-          <div class="text-xs sm:text-sm text-muted-foreground">
-            {{ phaseText }}
+          <div class="text-sm">{{ phaseText }}</div>
+          <div class="text-xs text-muted-foreground">
+            {{ subPhaseText }}
           </div>
         </div>
       </div>
@@ -73,40 +74,29 @@
 
     <!-- Timer Controls -->
     <div class="flex space-x-2">
-      <Button
-        v-if="!timer.isActive.value"
-        @click="startTimer"
-        size="sm"
-        class="px-6"
-      >
-        <Play class="mr-2 w-4 h-4" />
-        Start
+      <Button v-if="!timer.isActive.value" @click="startTimer" size="icon">
+        <Play class="w-4 h-4" />
       </Button>
 
       <Button
         v-if="timer.isActive.value && !timer.isPaused.value"
         @click="timer.pauseTimer"
         variant="outline"
-        size="sm"
-        class="px-6"
+        size="icon"
       >
-        <Pause class="mr-2 w-4 h-4" />
-        Pause
+        <Pause class="w-4 h-4" />
       </Button>
 
       <Button
         v-if="timer.isActive.value && timer.isPaused.value"
         @click="timer.resumeTimer"
-        size="sm"
-        class="px-6"
+        size="icon"
       >
-        <Play class="mr-2 w-4 h-4" />
-        Resume
+        <Play class="w-4 h-4" />
       </Button>
 
-      <Button @click="resetTimer" variant="outline" size="sm" class="px-6">
-        <RotateCcw class="mr-2 w-4 h-4" />
-        Reset
+      <Button @click="resetTimer" variant="outline" size="icon">
+        <RotateCcw class="w-4 h-4" />
       </Button>
     </div>
 
@@ -155,11 +145,13 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 interface Props {
   duration?: number;
   phaseText?: string;
+  subPhaseText?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   duration: 300,
   phaseText: "Timer",
+  subPhaseText: "Sub-phase",
 });
 
 const timer = useGameTimer();

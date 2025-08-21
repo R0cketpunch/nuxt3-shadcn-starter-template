@@ -66,7 +66,8 @@
           <div class="flex justify-center lg:col-span-1">
             <GameTimer
               :duration="currentPhaseDuration"
-              :phase-text="getPhaseDisplayText()"
+              :phase-text="currentPhase"
+              :sub-phase-text="currentSubPhase"
             />
           </div>
 
@@ -86,28 +87,15 @@
           </div>
         </div>
 
-        <!-- Westeros Phase Controls -->
+        <!-- Phase Controls with Sub-phases -->
         <div
-          v-if="gameState.currentPhase.id === 'westeros'"
-          class="p-6 rounded-lg border bg-card"
-        >
-          <h3 class="mb-4 text-lg font-semibold">Westeros Phase</h3>
-
-          <div class="text-center">
-            <Button @click="advancePhase" size="lg" class="px-8">
-              <ChevronRight class="mr-2 w-4 h-4" />
-              Proceed to Planning Phase
-            </Button>
-          </div>
-        </div>
-
-        <!-- Action Phase Controls -->
-        <div
-          v-if="gameState.currentPhase.id === 'action'"
+          v-if="
+            gameState.currentSubPhase && getCurrentPhaseSubPhases.length > 0
+          "
           class="p-6 rounded-lg border bg-card"
         >
           <h3 class="mb-4 text-lg font-semibold">
-            Action Phase - Turn Order Resolution
+            {{ gameState.currentPhase.name }} Phase
           </h3>
 
           <!-- Sub-phase Progress -->
@@ -115,7 +103,7 @@
             <div class="flex space-x-1">
               <div
                 :data-active="isCurrentSubPhase(index)"
-                v-for="(subPhase, index) in actionSubPhases"
+                v-for="(subPhase, index) in getCurrentPhaseSubPhases"
                 :key="subPhase.id"
                 class="flex-1 p-3 text-sm text-center rounded border data-[active=true]:bg-muted data-[active=true]:text-foreground text-muted-foreground"
               >
@@ -169,20 +157,19 @@
             <!-- Sub-phase Controls -->
             <div class="flex justify-center space-x-2">
               <Button
-                @click="nextSubPhase"
-                :disabled="!gameState.currentSubPhase"
-              >
-                <ChevronRight class="mr-2 w-4 h-4" />
-                Next Sub-phase
-              </Button>
-
-              <Button
                 v-if="gameState.currentSubPhase?.requiresTurnOrder"
                 @click="skipCurrentPlayer"
                 variant="outline"
               >
                 <SkipForward class="mr-2 w-4 h-4" />
-                Skip Current Player
+                Next Player
+              </Button>
+              <Button
+                @click="nextSubPhase"
+                :disabled="!gameState.currentSubPhase"
+              >
+                <ChevronRight class="mr-2 w-4 h-4" />
+                Next Sub-phase
               </Button>
             </div>
           </div>
@@ -225,15 +212,20 @@ import {
   Upload,
   SkipForward,
 } from "lucide-vue-next";
-import { ACTION_SUBPHASES } from "~/types/game";
+import {
+  ACTION_SUBPHASES,
+  WESTEROS_SUBPHASES,
+  PLANNING_SUBPHASES,
+} from "~/types/game";
 import type { House } from "~/types/game";
-import NumberFlow from "@number-flow/vue";
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
 
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
 
 const actionSubPhases = ACTION_SUBPHASES;
+const westerosSubPhases = WESTEROS_SUBPHASES;
+const planningSubPhases = PLANNING_SUBPHASES;
 const importFileInput = ref<HTMLInputElement | null>(null);
 
 const hasGameStarted = computed(() => {
@@ -276,17 +268,31 @@ const handleReorderHouses = (reorderedHouses: House[]) => {
   gameStateManager.setIronThroneOrder(reorderedHouses);
 };
 
-const getPhaseDisplayText = () => {
-  let text = gameState.value.currentPhase.name;
-  if (gameState.value.currentSubPhase) {
-    text += ` - ${gameState.value.currentSubPhase.name}`;
+const currentPhase = computed(() => {
+  return gameState.value.currentPhase.name;
+});
+
+const currentSubPhase = computed(() => {
+  return gameState.value.currentSubPhase?.name;
+});
+
+const getCurrentPhaseSubPhases = computed(() => {
+  switch (gameState.value.currentPhase.id) {
+    case "westeros":
+      return westerosSubPhases;
+    case "planning":
+      return planningSubPhases;
+    case "action":
+      return actionSubPhases;
+    default:
+      return [];
   }
-  return text;
-};
+});
 
 const isCurrentSubPhase = (index: number) => {
   if (!gameState.value.currentSubPhase) return index === 0;
-  const currentIndex = ACTION_SUBPHASES.findIndex(
+  const currentSubPhases = getCurrentPhaseSubPhases.value;
+  const currentIndex = currentSubPhases.findIndex(
     (sp) => sp.id === gameState.value.currentSubPhase!.id
   );
   return index === currentIndex;

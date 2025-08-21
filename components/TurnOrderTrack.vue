@@ -30,7 +30,7 @@
     </div>
 
     <!-- Turn Order Display -->
-    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="grid grid-cols-1 gap-2">
       <div
         v-for="(house, index) in houses"
         :key="house.id"
@@ -63,7 +63,7 @@
 
         <div class="text-center">
           <div class="text-sm font-bold" :style="{ color: house.color }">
-            {{ house.name }}
+            House {{ house.name }}
           </div>
           <div class="text-xs font-medium text-foreground">
             {{ house.playerName || `Player ${index + 1}` }}
@@ -72,7 +72,7 @@
             Position {{ index + 1 }}
           </div>
         </div>
-        
+
         <!-- Drag handle when reordering is allowed -->
         <div v-if="allowReordering" class="absolute top-1 left-1">
           <GripVertical class="w-4 h-4 text-muted-foreground" />
@@ -125,7 +125,12 @@
 </template>
 
 <script setup lang="ts">
-import { Crown, ChevronLeft, ChevronRight, GripVertical } from "lucide-vue-next";
+import {
+  Crown,
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+} from "lucide-vue-next";
 import type { House } from "~/types/game";
 
 interface Props {
@@ -178,38 +183,38 @@ const setCurrentPlayer = (index: number) => {
 // Drag and drop handlers
 const handleDragStart = (event: DragEvent, index: number) => {
   if (!props.allowReordering) return;
-  
+
   draggedIndex.value = index;
   if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.effectAllowed = "move";
   }
 };
 
 const handleDragOver = (event: DragEvent) => {
   if (!props.allowReordering) return;
-  
+
   event.preventDefault();
   if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
   }
 };
 
 const handleDrop = (event: DragEvent, dropIndex: number) => {
   if (!props.allowReordering) return;
-  
+
   event.preventDefault();
-  
+
   if (draggedIndex.value === -1 || draggedIndex.value === dropIndex) return;
-  
+
   // Create a copy of the houses array and reorder
   const reorderedHouses = [...props.houses];
   const draggedHouse = reorderedHouses[draggedIndex.value];
   reorderedHouses.splice(draggedIndex.value, 1);
   reorderedHouses.splice(dropIndex, 0, draggedHouse);
-  
+
   // Emit the reordered houses
-  emit('reorder-houses', reorderedHouses);
-  
+  emit("reorder-houses", reorderedHouses);
+
   draggedIndex.value = -1;
 };
 </script>

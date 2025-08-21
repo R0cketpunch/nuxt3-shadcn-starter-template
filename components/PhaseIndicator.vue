@@ -73,7 +73,7 @@
           Next Sub-phase
         </Button>
       </div>
-      
+
       <!-- Main Phase Navigation -->
       <Button
         @click="advancePhase"
