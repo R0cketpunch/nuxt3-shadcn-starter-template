@@ -30,7 +30,7 @@
     </div>
 
     <!-- Turn Order Display -->
-    <div class="grid grid-cols-1 gap-2">
+    <div class="grid grid-cols-1 gap-2" v-auto-animate>
       <div
         v-for="(house, index) in houses"
         :key="house.id"
@@ -147,7 +147,8 @@ interface Emits {
   (e: "set-current-player", index: number): void;
   (e: "reorder-houses", houses: House[]): void;
 }
-
+import NumberFlow from "@number-flow/vue";
+import { vAutoAnimate } from "@formkit/auto-animate/vue";
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 

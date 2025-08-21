@@ -230,7 +230,8 @@
                   >Default: {{ formatDuration(phase.defaultDuration) }}</span
                 >
                 <input
-                  v-model.number="customDurations[phase.id]"
+                  :value="getPhaseDurationValue(phase.id)"
+                  @input="setPhaseDurationValue(phase.id, ($event.target as HTMLInputElement).value)"
                   type="number"
                   :placeholder="
                     Math.floor(phase.defaultDuration / 60).toString()
@@ -238,6 +239,7 @@
                   class="px-3 py-2 w-20 rounded-md border"
                   min="1"
                   max="60"
+                  step="1"
                 />
                 <span class="text-sm text-muted-foreground">minutes</span>
               </div>
@@ -290,6 +292,27 @@ const selectedPlayerCount = ref<number>(0);
 const selectedHouses = ref<House[]>([]);
 const customDurations = ref<Record<string, number>>({});
 const errorMessage = ref("");
+
+// Initialize custom durations object with all phase IDs for proper reactivity
+const initializeCustomDurations = () => {
+  const durations: Record<string, number> = {}
+  gamePhases.forEach(phase => {
+    durations[phase.id] = customDurations.value[phase.id] || 0
+  })
+  customDurations.value = durations
+}
+
+// Get phase duration value for display (shows empty string if 0)
+const getPhaseDurationValue = (phaseId: string): string => {
+  const value = customDurations.value[phaseId]
+  return value > 0 ? value.toString() : ''
+}
+
+// Set phase duration value from input
+const setPhaseDurationValue = (phaseId: string, value: string) => {
+  const numValue = parseInt(value) || 0
+  customDurations.value[phaseId] = numValue
+}
 
 const availableHouses = computed(() => {
   return selectedPlayerCount.value > 0
@@ -395,5 +418,10 @@ const startGame = () => {
 watch(selectedPlayerCount, () => {
   selectedHouses.value = [];
   errorMessage.value = "";
+});
+
+// Initialize custom durations on mount
+onMounted(() => {
+  initializeCustomDurations();
 });
 </script>

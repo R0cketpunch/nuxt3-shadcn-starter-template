@@ -208,7 +208,9 @@ export const useGameState = () => {
   
   const getPhaseDuration = (phaseId: string): number => {
     const customDuration = settings.value.customPhaseDurations[phaseId]
-    if (customDuration) return customDuration
+    if (customDuration && customDuration > 0) {
+      return customDuration
+    }
     
     const phase = GAME_PHASES.find(p => p.id === phaseId)
     return phase?.defaultDuration || 300
@@ -216,6 +218,10 @@ export const useGameState = () => {
   
   const isGameComplete = (): boolean => {
     return gameState.value.currentRound > MAX_ROUNDS
+  }
+
+  const updateSettings = (newSettings: GameSettings) => {
+    settings.value = { ...newSettings }
   }
   
   // Initialize on mount
@@ -242,6 +248,7 @@ export const useGameState = () => {
     getPhaseDuration,
     isGameComplete,
     loadGameState,
-    saveGameState
+    saveGameState,
+    updateSettings
   }
 }

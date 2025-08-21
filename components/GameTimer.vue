@@ -36,6 +36,7 @@
                 :format="{ minimumIntegerDigits: 1 }"
               />
               <NumberFlow
+                v-if="shouldCountdown"
                 prefix=":"
                 :trend="-1"
                 :value="timeComponents.ss"
@@ -151,7 +152,7 @@
       v-if="!shouldCountdown"
       class="text-sm text-center text-muted-foreground"
     >
-      <p>Timer active only during Assign Orders phase</p>
+      <p>Timer active during Assign Orders and Reveal Orders phases</p>
       <p class="mt-1">Use phase controls to manage game flow</p>
     </div>
   </div>
@@ -179,9 +180,12 @@ const props = withDefaults(defineProps<Props>(), {
 const timer = useGameTimer();
 const circumference = 2 * Math.PI * 45;
 
-// Check if we should countdown (only during Assign Orders sub-phase)
+// Check if we should countdown (during both Assign Orders and Reveal Orders sub-phases)
 const shouldCountdown = computed(() => {
-  return props.currentSubPhase === "assign-orders";
+  return (
+    props.currentSubPhase === "assign-orders" ||
+    props.currentSubPhase === "reveal-orders"
+  );
 });
 
 // Automatically start timer when component mounts or mode changes

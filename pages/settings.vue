@@ -137,12 +137,14 @@
                     Built-in: {{ formatDuration(phase.defaultDuration) }}
                   </span>
                   <input
-                    v-model.number="localSettings.customPhaseDurations[phase.id]"
+                    :value="getPhaseDurationValue(phase.id)"
+                    @input="setPhaseDurationValue(phase.id, ($event.target as HTMLInputElement).value)"
                     type="number"
                     :placeholder="Math.floor(phase.defaultDuration / 60).toString()"
                     class="w-20 px-3 py-2 border rounded-md text-center"
                     min="1"
                     max="60"
+                    step="1"
                   />
                   <span class="text-sm text-muted-foreground">min</span>
                   <Button
@@ -252,7 +254,7 @@ const gamePhases = GAME_PHASES
 const importFileInput = ref<HTMLInputElement | null>(null)
 const showSaveMessage = ref(false)
 
-// Local settings copy for editing
+// Local settings copy for editing  
 const localSettings = ref<GameSettings>({
   audioEnabled: true,
   visualAlertsEnabled: true,
@@ -260,9 +262,41 @@ const localSettings = ref<GameSettings>({
   customPhaseDurations: {}
 })
 
+// Initialize custom phase durations object with all phase IDs
+const initializeCustomDurations = () => {
+  const durations: Record<string, number> = {}
+  gamePhases.forEach(phase => {
+    durations[phase.id] = localSettings.value.customPhaseDurations[phase.id] || 0
+  })
+  localSettings.value.customPhaseDurations = durations
+}
+
+// Get phase duration value for display (shows empty string if 0)
+const getPhaseDurationValue = (phaseId: string): string => {
+  const value = localSettings.value.customPhaseDurations[phaseId]
+  return value > 0 ? value.toString() : ''
+}
+
+// Set phase duration value from input
+const setPhaseDurationValue = (phaseId: string, value: string) => {
+  const numValue = parseInt(value) || 0
+  localSettings.value.customPhaseDurations[phaseId] = numValue
+}
+
 // Initialize local settings from store
 onMounted(() => {
   localSettings.value = { ...gameStateManager.settings.value }
+  
+  // Convert stored seconds to minutes for display
+  Object.keys(localSettings.value.customPhaseDurations).forEach(key => {
+    const value = localSettings.value.customPhaseDurations[key]
+    if (value && value >= 60) {
+      localSettings.value.customPhaseDurations[key] = Math.floor(value / 60)
+    }
+  })
+  
+  // Ensure all phase IDs exist in customPhaseDurations for proper reactivity
+  initializeCustomDurations()
 })
 
 const setTheme = (theme: 'light' | 'dark') => {
@@ -309,23 +343,25 @@ const formatDuration = (seconds: number) => {
 }
 
 const resetPhaseDuration = (phaseId: string) => {
-  delete localSettings.value.customPhaseDurations[phaseId]
+  localSettings.value.customPhaseDurations[phaseId] = 0
 }
 
 const saveSettings = () => {
-  // Clean up empty custom durations
-  Object.keys(localSettings.value.customPhaseDurations).forEach(key => {
-    const value = localSettings.value.customPhaseDurations[key]
-    if (!value || value <= 0) {
-      delete localSettings.value.customPhaseDurations[key]
-    } else {
-      // Convert minutes to seconds
-      localSettings.value.customPhaseDurations[key] = value * 60
+  // Create a copy of settings to save
+  const settingsToSave = { ...localSettings.value }
+  
+  // Convert minutes to seconds for storage and clean up empty values
+  const cleanedDurations: Record<string, number> = {}
+  Object.keys(settingsToSave.customPhaseDurations).forEach(key => {
+    const value = settingsToSave.customPhaseDurations[key]
+    if (value && value > 0) {
+      cleanedDurations[key] = value * 60  // Convert minutes to seconds
     }
   })
+  settingsToSave.customPhaseDurations = cleanedDurations
   
-  // Update the store
-  gameStateManager.settings.value = { ...localSettings.value }
+  // Update the store with converted values
+  gameStateManager.updateSettings(settingsToSave)
   
   // Show success message
   showSaveMessage.value = true
@@ -391,13 +427,4 @@ const resetAllSettings = () => {
   }
 }
 
-// Convert seconds back to minutes for display
-watch(localSettings, () => {
-  Object.keys(localSettings.value.customPhaseDurations).forEach(key => {
-    const value = localSettings.value.customPhaseDurations[key]
-    if (value && value >= 60) {
-      localSettings.value.customPhaseDurations[key] = Math.floor(value / 60)
-    }
-  })
-}, { deep: true })
 </script>
