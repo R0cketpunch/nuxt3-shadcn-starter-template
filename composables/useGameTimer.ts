@@ -38,29 +38,44 @@ export const useGameTimer = () => {
     }
   };
 
-  const startTimer = (duration: number) => {
+  const startTimer = (duration: number, shouldCountdown = true, gameStartTime?: number) => {
     if (intervalId.value) {
       clearInterval(intervalId.value);
     }
 
-    timeRemaining.value = duration;
+    if (shouldCountdown) {
+      timeRemaining.value = duration;
+    } else {
+      // Show total game time when not actively timing
+      if (gameStartTime) {
+        timeRemaining.value = Math.floor((Date.now() - gameStartTime) / 1000);
+      } else {
+        timeRemaining.value = 0;
+      }
+    }
+    
     isActive.value = true;
     isPaused.value = false;
 
     intervalId.value = setInterval(() => {
-      if (!isPaused.value && timeRemaining.value > 0) {
-        timeRemaining.value--;
+      if (!isPaused.value) {
+        if (shouldCountdown && timeRemaining.value > 0) {
+          timeRemaining.value--;
 
-        // Audio alerts at 60 and 30 seconds
-        if (timeRemaining.value === 60) {
-          playAlert(600, 300); // Lower pitch, longer duration
-        } else if (timeRemaining.value === 30) {
-          playAlert(800, 200); // Higher pitch, shorter duration
-        } else if (timeRemaining.value === 10) {
-          playAlert(1000, 100); // Urgent beep
-        } else if (timeRemaining.value === 0) {
-          playAlert(400, 500); // Low completion tone
-          isActive.value = false;
+          // Audio alerts at 60 and 30 seconds
+          if (timeRemaining.value === 60) {
+            playAlert(600, 300); // Lower pitch, longer duration
+          } else if (timeRemaining.value === 30) {
+            playAlert(800, 200); // Higher pitch, shorter duration
+          } else if (timeRemaining.value === 10) {
+            playAlert(1000, 100); // Urgent beep
+          } else if (timeRemaining.value === 0) {
+            playAlert(400, 500); // Low completion tone
+            isActive.value = false;
+          }
+        } else if (!shouldCountdown && gameStartTime) {
+          // Count up total game time
+          timeRemaining.value = Math.floor((Date.now() - gameStartTime) / 1000);
         }
       }
     }, 1000);
@@ -76,14 +91,23 @@ export const useGameTimer = () => {
     }
   };
 
-  const resetTimer = (duration?: number) => {
+  const resetTimer = (duration?: number, shouldCountdown = true, gameStartTime?: number) => {
     if (intervalId.value) {
       clearInterval(intervalId.value);
       intervalId.value = null;
     }
 
     if (duration !== undefined) {
-      timeRemaining.value = duration;
+      if (shouldCountdown) {
+        timeRemaining.value = duration;
+      } else {
+        // Show current total game time
+        if (gameStartTime) {
+          timeRemaining.value = Math.floor((Date.now() - gameStartTime) / 1000);
+        } else {
+          timeRemaining.value = 0;
+        }
+      }
     }
     isActive.value = false;
     isPaused.value = false;

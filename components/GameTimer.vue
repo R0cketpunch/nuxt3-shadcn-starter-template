@@ -3,8 +3,7 @@
     <!-- Timer Display -->
     <div class="relative">
       <div
-        class="flex justify-center items-center w-32 h-32 rounded-full border-8 transition-colors duration-300 sm:w-48 sm:h-48"
-        :class="timerBorderClass"
+        class="flex justify-center items-center w-32 h-32 rounded-full sm:w-48 sm:h-48"
       >
         <div class="text-center">
           <NumberFlowGroup>
@@ -57,13 +56,24 @@
         class="absolute top-0 left-0 w-32 h-32 -rotate-90 sm:w-48 sm:h-48"
         viewBox="0 0 100 100"
       >
+        <!-- Background ring -->
         <circle
           cx="50"
           cy="50"
           r="45"
           fill="none"
+          stroke="var(--muted)"
+          stroke-width="8"
+        />
+        <!-- Progress ring -->
+        <circle
+          v-if="shouldCountdown"
+          cx="50"
+          cy="50"
+          r="45"
+          fill="none"
           stroke="currentColor"
-          :stroke-width="3"
+          stroke-width="8"
           :stroke-dasharray="circumference"
           :stroke-dashoffset="strokeDashoffset"
           :class="timer.getTimerColor()"
@@ -72,8 +82,8 @@
       </svg>
     </div>
 
-    <!-- Timer Controls -->
-    <div class="flex space-x-2">
+    <!-- Timer Controls - only show during countdown mode -->
+    <div v-if="shouldCountdown" class="flex space-x-2">
       <Button v-if="!timer.isActive.value" @click="startTimer" size="icon">
         <Play class="w-4 h-4" />
       </Button>
@@ -100,13 +110,13 @@
       </Button>
     </div>
 
-    <!-- Quick Time Adjustments -->
-    <div class="flex space-x-2">
+    <!-- Quick Time Adjustments - only show during countdown mode -->
+    <div v-if="shouldCountdown" class="flex space-x-2">
       <Button
         @click="timer.addTime(-60)"
         variant="ghost"
         size="sm"
-        :disabled="!timer.isActive.value"
+        :disabled="!timer.isActive.value || !shouldCountdown"
       >
         -1m
       </Button>
@@ -114,7 +124,7 @@
         @click="timer.addTime(-30)"
         variant="ghost"
         size="sm"
-        :disabled="!timer.isActive.value"
+        :disabled="!timer.isActive.value || !shouldCountdown"
       >
         -30s
       </Button>
@@ -122,7 +132,7 @@
         @click="timer.addTime(30)"
         variant="ghost"
         size="sm"
-        :disabled="!timer.isActive.value"
+        :disabled="!timer.isActive.value || !shouldCountdown"
       >
         +30s
       </Button>
@@ -130,10 +140,19 @@
         @click="timer.addTime(60)"
         variant="ghost"
         size="sm"
-        :disabled="!timer.isActive.value"
+        :disabled="!timer.isActive.value || !shouldCountdown"
       >
         +1m
       </Button>
+    </div>
+
+    <!-- Total Game Time Info - show when not in countdown mode -->
+    <div
+      v-if="!shouldCountdown"
+      class="text-sm text-center text-muted-foreground"
+    >
+      <p>Timer active only during Assign Orders phase</p>
+      <p class="mt-1">Use phase controls to manage game flow</p>
     </div>
   </div>
 </template>
@@ -141,21 +160,44 @@
 <script setup lang="ts">
 import { Play, Pause, RotateCcw } from "lucide-vue-next";
 import NumberFlow, { NumberFlowGroup } from "@number-flow/vue";
-import { vAutoAnimate } from "@formkit/auto-animate/vue";
 interface Props {
   duration?: number;
   phaseText?: string;
   subPhaseText?: string;
+  currentSubPhase?: string;
+  gameStartTime?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   duration: 300,
   phaseText: "Timer",
   subPhaseText: "Sub-phase",
+  currentSubPhase: undefined,
+  gameStartTime: undefined,
 });
 
 const timer = useGameTimer();
 const circumference = 2 * Math.PI * 45;
+
+// Check if we should countdown (only during Assign Orders sub-phase)
+const shouldCountdown = computed(() => {
+  return props.currentSubPhase === "assign-orders";
+});
+
+// Automatically start timer when component mounts or mode changes
+watch(
+  [shouldCountdown],
+  () => {
+    if (!shouldCountdown.value && !timer.isActive.value) {
+      // Start total game time tracking automatically when not in countdown mode
+      timer.startTimer(props.duration, false, props.gameStartTime);
+    } else if (shouldCountdown.value && timer.isActive.value) {
+      // Stop current timer and reset to phase duration when switching to countdown mode
+      timer.resetTimer(props.duration, true, props.gameStartTime);
+    }
+  },
+  { immediate: true }
+);
 
 const timeComponents = computed(() => {
   return timer.getTimeComponents(timer.timeRemaining.value);
@@ -174,10 +216,10 @@ const strokeDashoffset = computed(() => {
 });
 
 const startTimer = () => {
-  timer.startTimer(props.duration);
+  timer.startTimer(props.duration, shouldCountdown.value, props.gameStartTime);
 };
 
 const resetTimer = () => {
-  timer.resetTimer(props.duration);
+  timer.resetTimer(props.duration, shouldCountdown.value, props.gameStartTime);
 };
 </script>

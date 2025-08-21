@@ -77,7 +77,8 @@ export const useGameState = () => {
       ...initialGameState,
       ironThroneOrder,
       currentPhase: GAME_PHASES[1], // Start with Planning phase in round 1 (Westeros is skipped)
-      currentSubPhase: PLANNING_SUBPHASES[0] // Start with Assign Orders
+      currentSubPhase: PLANNING_SUBPHASES[0], // Start with Assign Orders
+      gameStartTime: Date.now() // Save timestamp when game starts
     }
   }
   

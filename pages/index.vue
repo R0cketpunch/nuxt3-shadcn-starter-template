@@ -68,6 +68,8 @@
               :duration="currentPhaseDuration"
               :phase-text="currentPhase"
               :sub-phase-text="currentSubPhase"
+              :current-sub-phase="gameState.currentSubPhase?.id"
+              :game-start-time="gameState.gameStartTime"
             />
           </div>
 

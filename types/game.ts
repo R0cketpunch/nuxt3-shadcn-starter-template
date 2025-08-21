@@ -39,6 +39,7 @@ export interface GameState {
   timeRemaining: number // seconds
   isPaused: boolean
   isTimerActive: boolean
+  gameStartTime?: number // timestamp when game was started during setup
 }
 
 export interface GameSettings {
