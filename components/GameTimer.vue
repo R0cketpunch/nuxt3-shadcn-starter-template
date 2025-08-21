@@ -188,12 +188,12 @@ const shouldCountdown = computed(() => {
 watch(
   [shouldCountdown],
   () => {
-    if (!shouldCountdown.value && !timer.isActive.value) {
-      // Start total game time tracking automatically when not in countdown mode
+    if (shouldCountdown.value) {
+      // Automatically start countdown timer when entering Assign Orders phase
+      timer.startTimer(props.duration, true, props.gameStartTime);
+    } else {
+      // Start total game time tracking when not in countdown mode
       timer.startTimer(props.duration, false, props.gameStartTime);
-    } else if (shouldCountdown.value && timer.isActive.value) {
-      // Stop current timer and reset to phase duration when switching to countdown mode
-      timer.resetTimer(props.duration, true, props.gameStartTime);
     }
   },
   { immediate: true }
