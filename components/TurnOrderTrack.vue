@@ -28,6 +28,9 @@
           <div class="font-bold text-sm" :style="{ color: house.color }">
             {{ house.name }}
           </div>
+          <div class="text-xs font-medium text-foreground">
+            {{ house.playerName || `Player ${index + 1}` }}
+          </div>
           <div class="text-xs text-muted-foreground">
             Position {{ index + 1 }}
           </div>
@@ -43,6 +46,9 @@
         :style="{ color: currentPlayer.color }"
       >
         {{ currentPlayer.name }}
+      </div>
+      <div class="text-sm font-medium text-muted-foreground">
+        {{ currentPlayer.playerName || `Player ${currentPlayerIndex + 1}` }}
       </div>
     </div>
     
@@ -71,6 +77,7 @@
     <!-- Next Player Preview -->
     <div v-if="nextPlayer" class="text-center text-sm text-muted-foreground">
       Next: <span :style="{ color: nextPlayer.color }" class="font-semibold">{{ nextPlayer.name }}</span>
+      <span class="font-medium">({{ nextPlayer.playerName || 'Player' }})</span>
     </div>
   </div>
 </template>

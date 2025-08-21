@@ -37,31 +37,56 @@
 
         <!-- House Selection -->
         <div v-if="selectedPlayerCount" class="space-y-4">
-          <h2 class="text-xl font-semibold">Select Houses ({{ selectedHouses.length }}/{{ selectedPlayerCount }})</h2>
+          <h2 class="text-xl font-semibold">Select Houses & Players ({{ selectedHouses.length }}/{{ selectedPlayerCount }})</h2>
           <p class="text-sm text-muted-foreground">
-            Choose {{ selectedPlayerCount }} houses that will participate in this game.
+            Choose {{ selectedPlayerCount }} houses and assign player names.
           </p>
           
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
               v-for="house in availableHouses"
               :key="house.id"
-              class="p-4 rounded-lg border-2 cursor-pointer transition-all hover:scale-105"
+              class="p-4 rounded-lg border-2 transition-all"
               :class="[
                 isHouseSelected(house.id) 
-                  ? `border-[${house.color}] bg-opacity-20` 
-                  : 'border-gray-300 hover:border-gray-400',
-                selectedHouses.length >= selectedPlayerCount && !isHouseSelected(house.id) ? 'opacity-50 cursor-not-allowed' : ''
+                  ? `border-2` 
+                  : 'border-gray-300',
+                selectedHouses.length >= selectedPlayerCount && !isHouseSelected(house.id) ? 'opacity-50' : ''
               ]"
-              :style="isHouseSelected(house.id) ? { backgroundColor: house.color + '20', borderColor: house.color } : {}"
-              @click="toggleHouseSelection(house)"
+              :style="isHouseSelected(house.id) ? { backgroundColor: house.color + '15', borderColor: house.color } : {}"
             >
-              <div class="text-center">
-                <div class="font-bold text-lg" :style="{ color: house.color }">
-                  {{ house.name }}
+              <div class="space-y-3">
+                <!-- House Header -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="font-bold text-lg" :style="{ color: house.color }">
+                      {{ house.name }}
+                    </div>
+                    <div v-if="isHouseSelected(house.id)">
+                      <CheckCircle class="w-5 h-5" :style="{ color: house.color }" />
+                    </div>
+                  </div>
+                  
+                  <Button
+                    @click="toggleHouseSelection(house)"
+                    :variant="isHouseSelected(house.id) ? 'destructive' : 'default'"
+                    size="sm"
+                    :disabled="selectedHouses.length >= selectedPlayerCount && !isHouseSelected(house.id)"
+                  >
+                    {{ isHouseSelected(house.id) ? 'Remove' : 'Add' }}
+                  </Button>
                 </div>
-                <div v-if="isHouseSelected(house.id)" class="mt-2">
-                  <CheckCircle class="w-6 h-6 mx-auto" :style="{ color: house.color }" />
+                
+                <!-- Player Name Input (only if house is selected) -->
+                <div v-if="isHouseSelected(house.id)" class="space-y-2">
+                  <label class="text-sm font-medium">Player Name</label>
+                  <input
+                    v-model="getSelectedHouse(house.id)!.playerName"
+                    type="text"
+                    :placeholder="`Player ${getPlayerNumber(house.id)}`"
+                    class="w-full px-3 py-2 border rounded-md bg-background"
+                    @input="updatePlayerName(house.id, $event)"
+                  />
                 </div>
               </div>
             </div>
@@ -90,11 +115,16 @@
                 <!-- Crown for Iron Throne holder -->
                 <Crown v-if="index === 0" class="w-6 h-6 text-yellow-500" />
                 <div class="w-6 text-center font-bold">{{ index + 1 }}</div>
-                <div class="font-semibold" :style="{ color: house.color }">
-                  {{ house.name }}
-                </div>
-                <div v-if="index === 0" class="text-sm text-muted-foreground">
-                  (Iron Throne Holder)
+                <div class="space-y-1">
+                  <div class="font-semibold" :style="{ color: house.color }">
+                    {{ house.name }}
+                  </div>
+                  <div class="text-sm font-medium">
+                    {{ house.playerName || `Player ${index + 1}` }}
+                  </div>
+                  <div v-if="index === 0" class="text-xs text-muted-foreground">
+                    (Iron Throne Holder)
+                  </div>
                 </div>
               </div>
               
@@ -190,6 +220,28 @@ const isHouseSelected = (houseId: string) => {
   return selectedHouses.value.some(h => h.id === houseId)
 }
 
+const getSelectedHouse = (houseId: string) => {
+  return selectedHouses.value.find(h => h.id === houseId)
+}
+
+const getPlayerNumber = (houseId: string) => {
+  const index = selectedHouses.value.findIndex(h => h.id === houseId)
+  return index + 1
+}
+
+const updatePlayerName = (houseId: string, event: Event) => {
+  const target = event.target as HTMLInputElement
+  const house = selectedHouses.value.find(h => h.id === houseId)
+  if (house) {
+    house.playerName = target.value
+    // Also update in iron throne order
+    const ironThroneHouse = ironThroneOrder.value.find(h => h.id === houseId)
+    if (ironThroneHouse) {
+      ironThroneHouse.playerName = target.value
+    }
+  }
+}
+
 const toggleHouseSelection = (house: House) => {
   const isSelected = isHouseSelected(house.id)
   
@@ -197,8 +249,12 @@ const toggleHouseSelection = (house: House) => {
     selectedHouses.value = selectedHouses.value.filter(h => h.id !== house.id)
     ironThroneOrder.value = ironThroneOrder.value.filter(h => h.id !== house.id)
   } else if (selectedHouses.value.length < selectedPlayerCount.value) {
-    selectedHouses.value.push(house)
-    ironThroneOrder.value.push(house)
+    const newHouse = { 
+      ...house, 
+      playerName: `Player ${selectedHouses.value.length + 1}` 
+    }
+    selectedHouses.value.push(newHouse)
+    ironThroneOrder.value.push(newHouse)
   }
 }
 

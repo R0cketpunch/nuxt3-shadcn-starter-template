@@ -48,9 +48,17 @@ store/             - Pinia stores
 assets/css/        - Global styles (tailwind.css)
 ```
 
+### Game Features
+- **Player Management**: Houses include optional playerName field for personalization
+- **Timer System**: Audio/visual alerts with customizable phase durations
+- **Turn Order**: Drag-and-drop Iron Throne track with player name display
+- **State Persistence**: LocalStorage with export/import functionality
+- **Responsive Design**: Mobile-first with tablet optimization
+
 ### Development Notes
 - Uses Tailwind CSS 4 with Vite plugin (not PostCSS)
 - shadcn components use "new-york" style with neutral base colors
 - CSS variables enabled for theming
 - TypeScript enabled throughout with strict configuration
 - Component registration handled by shadcn-nuxt module
+- Player names default to "Player X" if not provided during setup

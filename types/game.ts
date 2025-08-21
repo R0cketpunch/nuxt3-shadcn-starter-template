@@ -2,6 +2,7 @@ export interface House {
   id: string
   name: string // 'Stark', 'Lannister', 'Baratheon', 'Greyjoy', 'Tyrell', 'Martell'
   color: string // hex color for UI
+  playerName?: string // Player's name, defaults to "Player X" if not provided
 }
 
 export interface GamePhase {
