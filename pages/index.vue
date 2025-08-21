@@ -1,43 +1,10 @@
 <template>
-  <div class="min-h-screen bg-background">
-    <!-- Header -->
-    <header class="border-b bg-card">
-      <div class="container px-4 py-4 mx-auto">
-        <div class="flex justify-between items-center">
-          <div>
-            <h1 class="text-2xl font-bold">Game of Thrones: Game Master</h1>
-            <p class="text-sm text-muted-foreground">
-              Board Game 2nd Edition Timer & Turn Manager
-            </p>
-          </div>
-
-          <div class="flex items-center space-x-2">
-            <!-- Emergency Pause -->
-            <Button
-              v-if="gameState.isTimerActive"
-              @click="toggleEmergencyPause"
-              :variant="gameState.isPaused ? 'default' : 'destructive'"
-              size="sm"
-            >
-              {{ gameState.isPaused ? "Resume" : "Emergency Pause" }}
-            </Button>
-
-            <!-- Navigation -->
-            <Button as-child variant="ghost" size="sm">
-              <NuxtLink to="/setup">Setup</NuxtLink>
-            </Button>
-            <Button as-child variant="ghost" size="sm">
-              <NuxtLink to="/settings">Settings</NuxtLink>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </header>
-
+  <div>
     <!-- Main Dashboard -->
-    <main class="container px-4 py-6 mx-auto" v-auto-animate>
-      <div v-if="!hasGameStarted" class="py-12 text-center">
+    <main v-auto-animate>
+      <div v-if="!hasGameStarted">
         <div class="space-y-4">
+          as
           <h2 class="text-xl font-semibold">No Game in Progress</h2>
           <p class="text-muted-foreground">
             Start a new game to begin managing turns and timers.
@@ -48,159 +15,103 @@
         </div>
       </div>
 
-      <div v-else class="space-y-6" v-auto-animate>
-        <!-- Phase and Round Info -->
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <!-- Phase Indicator -->
-          <div class="lg:col-span-1">
-            <PhaseIndicator
-              :current-round="gameState.currentRound"
-              :current-phase="gameState.currentPhase"
-              :current-sub-phase="gameState.currentSubPhase"
-              @advance-phase="advancePhase"
-              @advance-subphase="nextSubPhase"
-            />
-          </div>
+      <div
+        v-else
+        v-auto-animate
+        class="flex flex-col min-h-screen divide-x divide-y"
+      >
+        <!-- Header -->
+        <header class="bg-card">
+          <div class="px-4 py-4 mx-auto">
+            <div class="flex justify-between items-center">
+              <div>
+                <h1 class="text-2xl font-bold">Game of Thrones: Game Master</h1>
+                <p class="text-sm text-muted-foreground">
+                  Board Game 2nd Edition Timer & Turn Manager
+                </p>
+              </div>
 
-          <!-- Timer -->
-          <div class="flex justify-center lg:col-span-1">
-            <GameTimer
-              :duration="currentPhaseDuration"
-              :phase-text="currentPhase"
-              :sub-phase-text="currentSubPhase"
-              :current-sub-phase="gameState.currentSubPhase?.id"
-              :game-start-time="gameState.gameStartTime"
-            />
-          </div>
+              <div class="flex items-center space-x-2">
+                <div class="flex flex-wrap gap-2 justify-center">
+                  <Button @click="resetGame" variant="outline" size="sm">
+                    <RotateCcw class="mr-2 w-4 h-4" />
+                    Reset Game
+                  </Button>
 
-          <!-- Turn Order -->
-          <div class="lg:col-span-1">
-            <TurnOrderTrack
-              :houses="[...gameState.ironThroneOrder]"
-              :current-player-index="gameState.currentPlayerIndex"
-              :is-action-phase="gameState.currentPhase.id === 'action'"
-              :current-sub-phase="gameState.currentSubPhase?.name"
-              :allow-reordering="gameState.currentPhase.id === 'westeros'"
-              @next-player="nextPlayer"
-              @previous-player="previousPlayer"
-              @set-current-player="setCurrentPlayer"
-              @reorder-houses="handleReorderHouses"
-            />
-          </div>
-        </div>
+                  <Button @click="exportGame" variant="outline" size="sm">
+                    <Download class="mr-2 w-4 h-4" />
+                    Export State
+                  </Button>
 
-        <!-- Phase Controls with Sub-phases -->
-        <div
-          v-if="
-            gameState.currentSubPhase && getCurrentPhaseSubPhases.length > 0
-          "
-          class="p-6 rounded-lg border bg-card"
-        >
-          <h3 class="mb-4 text-lg font-semibold">
-            {{ gameState.currentPhase.name }} Phase
-          </h3>
-
-          <!-- Sub-phase Progress -->
-          <div class="space-y-4">
-            <div class="flex space-x-1">
-              <div
-                :data-active="isCurrentSubPhase(index)"
-                v-for="(subPhase, index) in getCurrentPhaseSubPhases"
-                :key="subPhase.id"
-                class="flex-1 p-3 text-sm text-center rounded border data-[active=true]:bg-muted data-[active=true]:text-foreground text-muted-foreground"
-              >
-                <div class="font-semibold">{{ subPhase.name }}</div>
-                <div class="mt-1 text-xs">
-                  {{
-                    subPhase.requiresTurnOrder
-                      ? "One at a Time"
-                      : "Simultaneous"
-                  }}
+                  <input
+                    ref="importFileInput"
+                    type="file"
+                    accept=".json"
+                    class="hidden"
+                    @change="handleImportFile"
+                  />
+                  <Button
+                    @click="importFileInput?.click()"
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Upload class="mr-2 w-4 h-4" />
+                    Import State
+                  </Button>
                 </div>
+                <Button as-child variant="outline" size="sm">
+                  <NuxtLink to="/setup">Setup</NuxtLink>
+                </Button>
+                <Button as-child variant="outline" size="sm">
+                  <NuxtLink to="/settings">Settings</NuxtLink>
+                </Button>
               </div>
             </div>
-
-            <!-- Turn Order Queue (only show for turn order sub-phases) -->
-            <div
-              v-if="gameState.currentSubPhase?.requiresTurnOrder"
-              class="space-y-2"
-            >
-              <div class="text-sm font-medium">Resolution Queue:</div>
-              <div class="flex flex-wrap gap-2">
-                <div
-                  v-for="(house, index) in gameState.ironThroneOrder"
-                  :key="house.id"
-                  class="px-3 py-2 text-sm rounded-lg border"
-                  :class="{
-                    'bg-blue-100 border-blue-500 text-blue-800 font-semibold':
-                      index === gameState.currentPlayerIndex,
-                    'bg-gray-100 border-gray-300 text-gray-600':
-                      index !== gameState.currentPlayerIndex,
-                  }"
-                  :style="
-                    index === gameState.currentPlayerIndex
-                      ? {
-                          backgroundColor: house.color + '20',
-                          borderColor: house.color,
-                        }
-                      : {}
-                  "
-                >
-                  <div class="font-medium">
-                    {{ index + 1 }}. {{ house.name }}
-                  </div>
-                  <div class="text-xs">
-                    {{ house.playerName || `Player ${index + 1}` }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Sub-phase Controls -->
-            <div class="flex justify-center space-x-2">
-              <Button
-                v-if="gameState.currentSubPhase?.requiresTurnOrder"
-                @click="skipCurrentPlayer"
-                variant="outline"
-              >
-                <SkipForward class="mr-2 w-4 h-4" />
-                Next Player
-              </Button>
-              <Button
-                @click="nextSubPhase"
-                :disabled="!gameState.currentSubPhase"
-              >
-                <ChevronRight class="mr-2 w-4 h-4" />
-                Next Sub-phase
-              </Button>
-            </div>
           </div>
-        </div>
-
-        <!-- Game Controls -->
-        <div class="flex flex-wrap gap-2 justify-center">
-          <Button @click="resetGame" variant="outline">
-            <RotateCcw class="mr-2 w-4 h-4" />
-            Reset Game
-          </Button>
-
-          <Button @click="exportGame" variant="outline">
-            <Download class="mr-2 w-4 h-4" />
-            Export State
-          </Button>
-
-          <input
-            ref="importFileInput"
-            type="file"
-            accept=".json"
-            class="hidden"
-            @change="handleImportFile"
+        </header>
+        <!-- Main Game Dashboard -->
+        <GameController
+          :game-state="gameState"
+          :current-player="getCurrentPlayer()"
+          @advance-phase="advancePhase"
+          @advance-subphase="nextSubPhase"
+          @next-player="nextPlayer"
+          @previous-player="previousPlayer"
+          @toggle-pause="toggleEmergencyPause"
+        />
+        <!-- Phase Indicator -->
+        <PhaseIndicator
+          :current-round="gameState.currentRound"
+          :current-phase="gameState.currentPhase"
+          :current-sub-phase="gameState.currentSubPhase"
+          @advance-phase="advancePhase"
+          @advance-subphase="nextSubPhase"
+          @next-player="nextPlayer"
+        />
+        <GameTimer
+          :duration="currentPhaseDuration"
+          :phase-text="currentPhase"
+          :sub-phase-text="currentSubPhase"
+          :current-sub-phase="gameState.currentSubPhase?.id"
+          :game-start-time="gameState.gameStartTime"
+        />
+        <!-- Right Column: Turn Order -->
+        <div class="grid flex-1 grid-cols-3 gap-px bg-muted">
+          <TurnOrderTrack
+            :houses="[...gameState.ironThroneOrder]"
+            :current-player-index="gameState.currentPlayerIndex"
+            :is-action-phase="gameState.currentPhase.id === 'action'"
+            :current-sub-phase="gameState.currentSubPhase?.name"
+            :allow-reordering="gameState.currentPhase.id === 'westeros'"
+            @next-player="nextPlayer"
+            @previous-player="previousPlayer"
+            @set-current-player="setCurrentPlayer"
+            @reorder-houses="handleReorderHouses"
           />
-          <Button @click="importFileInput?.click()" variant="outline">
-            <Upload class="mr-2 w-4 h-4" />
-            Import State
-          </Button>
+          <div class="bg-background"></div>
+          <div class="bg-background"></div>
         </div>
+        <!-- Left Column: Game Controller -->
       </div>
     </main>
   </div>
@@ -260,6 +171,10 @@ const previousPlayer = () => {
 
 const setCurrentPlayer = (index: number) => {
   gameStateManager.setCurrentPlayerIndex(index);
+};
+
+const getCurrentPlayer = () => {
+  return gameStateManager.getCurrentPlayer();
 };
 
 const skipCurrentPlayer = () => {

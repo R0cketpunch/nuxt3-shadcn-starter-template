@@ -38,7 +38,11 @@ export const useGameTimer = () => {
     }
   };
 
-  const startTimer = (duration: number, shouldCountdown = true, gameStartTime?: number) => {
+  const startTimer = (
+    duration: number,
+    shouldCountdown = true,
+    gameStartTime?: number
+  ) => {
     if (intervalId.value) {
       clearInterval(intervalId.value);
     }
@@ -53,7 +57,7 @@ export const useGameTimer = () => {
         timeRemaining.value = 0;
       }
     }
-    
+
     isActive.value = true;
     isPaused.value = false;
 
@@ -91,7 +95,11 @@ export const useGameTimer = () => {
     }
   };
 
-  const resetTimer = (duration?: number, shouldCountdown = true, gameStartTime?: number) => {
+  const resetTimer = (
+    duration?: number,
+    shouldCountdown = true,
+    gameStartTime?: number
+  ) => {
     if (intervalId.value) {
       clearInterval(intervalId.value);
       intervalId.value = null;
@@ -131,9 +139,15 @@ export const useGameTimer = () => {
   };
 
   const getTimerColor = (): string => {
-    if (timeRemaining.value > 60) return "text-green-600";
-    if (timeRemaining.value > 30) return "text-yellow-600";
-    return "text-red-600";
+    if (timeRemaining.value > 120) return "text-green-500";
+    if (timeRemaining.value > 60) return "text-yellow-500";
+    return "text-red-500";
+  };
+
+  const getTimerBackground = (): string => {
+    if (timeRemaining.value > 120) return "bg-green-500";
+    if (timeRemaining.value > 60) return "bg-yellow-500";
+    return "bg-red-500";
   };
 
   // Cleanup on unmount
@@ -155,5 +169,6 @@ export const useGameTimer = () => {
     formatTime,
     getTimeComponents,
     getTimerColor,
+    getTimerBackground,
   };
 };

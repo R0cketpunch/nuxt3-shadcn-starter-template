@@ -1,90 +1,65 @@
 <template>
-  <div class="flex flex-col items-center space-y-4">
+  <div
+    v-if="shouldCountdown"
+    class="grid grid-cols-3 gap-px items-center bg-muted"
+  >
     <!-- Timer Display -->
-    <div class="relative">
-      <div
-        class="flex justify-center items-center w-32 h-32 rounded-full sm:w-48 sm:h-48"
-      >
-        <div class="text-center">
-          <NumberFlowGroup>
-            <div
-              :style="{
-                fontVariantNumeric: 'tabular-nums',
-                '--number-flow-char-height': '0.85em',
-              }"
-              class="flex justify-center items-baseline text-2xl font-semibold transition-colors duration-300 sm:text-4xl"
-              :class="timer.getTimerColor()"
-            >
-              <NumberFlow
-                v-if="timeComponents.hh > 0"
-                :trend="-1"
-                :value="timeComponents.hh"
-                :format="{ minimumIntegerDigits: 2 }"
-              />
-              <NumberFlow
-                v-if="timeComponents.hh > 0"
-                prefix=":"
-                :trend="-1"
-                :value="timeComponents.mm"
-                :digits="{ 1: { max: 5 } }"
-                :format="{ minimumIntegerDigits: 2 }"
-              />
-              <NumberFlow
-                v-else
-                :trend="-1"
-                :value="timeComponents.mm"
-                :format="{ minimumIntegerDigits: 1 }"
-              />
-              <NumberFlow
-                v-if="shouldCountdown"
-                prefix=":"
-                :trend="-1"
-                :value="timeComponents.ss"
-                :digits="{ 1: { max: 5 } }"
-                :format="{ minimumIntegerDigits: 2 }"
-              />
-            </div>
-          </NumberFlowGroup>
-          <div class="text-sm">{{ phaseText }}</div>
-          <div class="text-xs text-muted-foreground">
-            {{ subPhaseText }}
-          </div>
+    <div class="p-10 bg-background aspect-[16/6] flex flex-col justify-center">
+      <NumberFlowGroup>
+        <div class="text-6xl" :class="timer.getTimerColor()">
+          <NumberFlow
+            v-if="timeComponents.hh > 0"
+            :trend="-1"
+            :value="timeComponents.hh"
+            :format="{ minimumIntegerDigits: 2 }"
+          />
+          <NumberFlow
+            v-if="timeComponents.hh > 0"
+            prefix=":"
+            :trend="-1"
+            :value="timeComponents.mm"
+            :digits="{ 1: { max: 5 } }"
+            :format="{ minimumIntegerDigits: 2 }"
+          />
+          <NumberFlow
+            v-else
+            :trend="-1"
+            :value="timeComponents.mm"
+            :format="{ minimumIntegerDigits: 1 }"
+          />
+          <NumberFlow
+            v-if="shouldCountdown"
+            prefix=":"
+            :trend="-1"
+            :value="timeComponents.ss"
+            :digits="{ 1: { max: 5 } }"
+            :format="{ minimumIntegerDigits: 2 }"
+          />
+          <span v-if="!shouldCountdown">
+            {{ timeComponents.hh > 0 ? "H" : "Min" }}
+          </span>
         </div>
-      </div>
+      </NumberFlowGroup>
+    </div>
+    <!-- Progress Ring -->
+    <div class="col-span-2 w-full h-full bg-background">
+      <div
+        v-if="shouldCountdown"
+        class="h-full text-2xl"
+        :class="timer.getTimerBackground()"
+        :style="`width: ${timeProgress}%`"
+      />
+      <div
+        v-else
+        class="h-full transition-all duration-500 bg-muted"
+        :style="`width: ${roundProgress}%`"
+      />
 
-      <!-- Progress Ring -->
-      <svg
-        class="absolute top-0 left-0 w-32 h-32 -rotate-90 sm:w-48 sm:h-48"
-        viewBox="0 0 100 100"
-      >
-        <!-- Background ring -->
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="var(--muted)"
-          stroke-width="8"
-        />
-        <!-- Progress ring -->
-        <circle
-          v-if="shouldCountdown"
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="8"
-          :stroke-dasharray="circumference"
-          :stroke-dashoffset="strokeDashoffset"
-          :class="timer.getTimerColor()"
-          class="transition-all duration-1000 ease-linear"
-        />
-      </svg>
+      <!-- <Progress v-model="timeProgress" class="w-full" /> -->
     </div>
 
     <!-- Timer Controls - only show during countdown mode -->
-    <div v-if="shouldCountdown" class="flex space-x-2">
+    <!-- <div v-if="shouldCountdown" class="flex space-x-2">
       <Button v-if="!timer.isActive.value" @click="startTimer" size="icon">
         <Play class="w-4 h-4" />
       </Button>
@@ -109,10 +84,10 @@
       <Button @click="resetTimer" variant="outline" size="icon">
         <RotateCcw class="w-4 h-4" />
       </Button>
-    </div>
+    </div> -->
 
     <!-- Quick Time Adjustments - only show during countdown mode -->
-    <div v-if="shouldCountdown" class="flex space-x-2">
+    <!-- <div v-if="shouldCountdown" class="flex space-x-2">
       <Button
         @click="timer.addTime(-60)"
         variant="ghost"
@@ -145,22 +120,22 @@
       >
         +1m
       </Button>
-    </div>
-
-    <!-- Total Game Time Info - show when not in countdown mode -->
-    <div
-      v-if="!shouldCountdown"
-      class="text-sm text-center text-muted-foreground"
-    >
-      <p>Timer active during Assign Orders and Reveal Orders phases</p>
-      <p class="mt-1">Use phase controls to manage game flow</p>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { Play, Pause, RotateCcw } from "lucide-vue-next";
 import NumberFlow, { NumberFlowGroup } from "@number-flow/vue";
+import { Progress } from "@/components/ui/progress";
+import {
+  MAX_ROUNDS,
+  GAME_PHASES,
+  WESTEROS_SUBPHASES,
+  PLANNING_SUBPHASES,
+  ACTION_SUBPHASES,
+} from "~/types/game";
+
 interface Props {
   duration?: number;
   phaseText?: string;
@@ -178,14 +153,12 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const timer = useGameTimer();
+const gameState = useGameState();
 const circumference = 2 * Math.PI * 45;
 
 // Check if we should countdown (during both Assign Orders and Reveal Orders sub-phases)
 const shouldCountdown = computed(() => {
-  return (
-    props.currentSubPhase === "assign-orders" ||
-    props.currentSubPhase === "reveal-orders"
-  );
+  return props.currentSubPhase === "assign-orders";
 });
 
 // Automatically start timer when component mounts or mode changes
@@ -226,4 +199,69 @@ const startTimer = () => {
 const resetTimer = () => {
   timer.resetTimer(props.duration, shouldCountdown.value, props.gameStartTime);
 };
+
+const timeProgress = computed(() => {
+  return (timer.timeRemaining.value / props.duration) * 100;
+});
+
+const roundProgress = computed(() => {
+  return (gameState.gameState.value.currentRound / MAX_ROUNDS) * 100;
+});
+
+const getNextStepName = computed(() => {
+  const currentPhase = gameState.gameState.value.currentPhase;
+  const currentSubPhase = gameState.gameState.value.currentSubPhase;
+  const currentRound = gameState.gameState.value.currentRound;
+
+  if (!currentSubPhase) {
+    // If no subphase, next step is the first subphase of current phase
+    if (currentPhase.id === "westeros") {
+      return WESTEROS_SUBPHASES[0]?.name || "Next Phase";
+    } else if (currentPhase.id === "planning") {
+      return PLANNING_SUBPHASES[0]?.name || "Next Phase";
+    } else if (currentPhase.id === "action") {
+      return ACTION_SUBPHASES[0]?.name || "Next Phase";
+    }
+    return "Next Phase";
+  }
+
+  // Find current subphase and determine next
+  if (currentPhase.id === "westeros") {
+    const currentIndex = WESTEROS_SUBPHASES.findIndex(
+      (sp) => sp.id === currentSubPhase.id
+    );
+    if (currentIndex < WESTEROS_SUBPHASES.length - 1) {
+      return WESTEROS_SUBPHASES[currentIndex + 1].name;
+    } else {
+      // End of westeros phase, go to planning
+      return GAME_PHASES[1].name; // Planning
+    }
+  } else if (currentPhase.id === "planning") {
+    const currentIndex = PLANNING_SUBPHASES.findIndex(
+      (sp) => sp.id === currentSubPhase.id
+    );
+    if (currentIndex < PLANNING_SUBPHASES.length - 1) {
+      return PLANNING_SUBPHASES[currentIndex + 1].name;
+    } else {
+      // End of planning phase, go to action
+      return GAME_PHASES[2].name; // Action
+    }
+  } else if (currentPhase.id === "action") {
+    const currentIndex = ACTION_SUBPHASES.findIndex(
+      (sp) => sp.id === currentSubPhase.id
+    );
+    if (currentIndex < ACTION_SUBPHASES.length - 1) {
+      return ACTION_SUBPHASES[currentIndex + 1].name;
+    } else {
+      // End of action phase, go to next round or end game
+      if (currentRound < MAX_ROUNDS) {
+        return `Round ${currentRound + 1}`;
+      } else {
+        return "Game End";
+      }
+    }
+  }
+
+  return "Continue";
+});
 </script>

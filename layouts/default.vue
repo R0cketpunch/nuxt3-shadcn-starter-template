@@ -1,18 +1,18 @@
 <template>
-  <div class="default-layout min-h-screen bg-background text-foreground">
+  <div class="min-h-screen default-layout bg-background text-foreground">
     <slot />
   </div>
 </template>
 
 <script setup>
 // Enable color mode support
-const colorMode = useColorMode()
+const colorMode = useColorMode();
 
 // Set initial color mode based on settings
 onMounted(() => {
-  const gameStateManager = useGameState()
+  const gameStateManager = useGameState();
   if (gameStateManager.settings.value.darkTheme) {
-    colorMode.preference = 'dark'
+    colorMode.preference = "dark";
   }
-})
+});
 </script>
