@@ -1,5 +1,5 @@
 import type { GameState, House, GameSettings } from '~/types/game'
-import { GAME_PHASES, ACTION_SUBPHASES, MAX_ROUNDS, getStartingIronThroneOrder } from '~/types/game'
+import { GAME_PHASES, WESTEROS_SUBPHASES, PLANNING_SUBPHASES, ACTION_SUBPHASES, MAX_ROUNDS, getStartingIronThroneOrder } from '~/types/game'
 
 const STORAGE_KEY = 'agot-gm-game-state'
 const SETTINGS_KEY = 'agot-gm-settings'
@@ -76,7 +76,8 @@ export const useGameState = () => {
     gameState.value = {
       ...initialGameState,
       ironThroneOrder,
-      currentPhase: GAME_PHASES[0]
+      currentPhase: GAME_PHASES[1], // Start with Planning phase in round 1 (Westeros is skipped)
+      currentSubPhase: PLANNING_SUBPHASES[0] // Start with Assign Orders
     }
   }
   
@@ -86,11 +87,13 @@ export const useGameState = () => {
       if (gameState.value.currentRound < MAX_ROUNDS) {
         gameState.value.currentRound++
         gameState.value.currentPhase = GAME_PHASES[0] // Back to Westeros
-        gameState.value.currentSubPhase = undefined
+        gameState.value.currentSubPhase = gameState.value.currentRound === 1 ? undefined : WESTEROS_SUBPHASES[0]
         gameState.value.currentPlayerIndex = 0
       }
     } else if (gameState.value.currentPhase.id === 'westeros') {
       gameState.value.currentPhase = GAME_PHASES[1] // Planning
+      gameState.value.currentSubPhase = PLANNING_SUBPHASES[0] // Assign Orders
+      gameState.value.currentPlayerIndex = 0
     } else if (gameState.value.currentPhase.id === 'planning') {
       gameState.value.currentPhase = GAME_PHASES[2] // Action
       gameState.value.currentSubPhase = ACTION_SUBPHASES[0] // Raid Orders
@@ -99,16 +102,38 @@ export const useGameState = () => {
   }
   
   const nextSubPhase = () => {
-    if (gameState.value.currentPhase.id !== 'action' || !gameState.value.currentSubPhase) return
+    if (!gameState.value.currentSubPhase) return
     
-    const currentSubPhaseIndex = ACTION_SUBPHASES.findIndex(sp => sp.id === gameState.value.currentSubPhase!.id)
-    
-    if (currentSubPhaseIndex < ACTION_SUBPHASES.length - 1) {
-      gameState.value.currentSubPhase = ACTION_SUBPHASES[currentSubPhaseIndex + 1]
-      gameState.value.currentPlayerIndex = 0
-    } else {
-      // End of action phase
-      nextPhase()
+    if (gameState.value.currentPhase.id === 'westeros') {
+      const currentSubPhaseIndex = WESTEROS_SUBPHASES.findIndex(sp => sp.id === gameState.value.currentSubPhase!.id)
+      
+      if (currentSubPhaseIndex < WESTEROS_SUBPHASES.length - 1) {
+        gameState.value.currentSubPhase = WESTEROS_SUBPHASES[currentSubPhaseIndex + 1]
+        gameState.value.currentPlayerIndex = 0
+      } else {
+        // End of westeros phase
+        nextPhase()
+      }
+    } else if (gameState.value.currentPhase.id === 'planning') {
+      const currentSubPhaseIndex = PLANNING_SUBPHASES.findIndex(sp => sp.id === gameState.value.currentSubPhase!.id)
+      
+      if (currentSubPhaseIndex < PLANNING_SUBPHASES.length - 1) {
+        gameState.value.currentSubPhase = PLANNING_SUBPHASES[currentSubPhaseIndex + 1]
+        gameState.value.currentPlayerIndex = 0
+      } else {
+        // End of planning phase
+        nextPhase()
+      }
+    } else if (gameState.value.currentPhase.id === 'action') {
+      const currentSubPhaseIndex = ACTION_SUBPHASES.findIndex(sp => sp.id === gameState.value.currentSubPhase!.id)
+      
+      if (currentSubPhaseIndex < ACTION_SUBPHASES.length - 1) {
+        gameState.value.currentSubPhase = ACTION_SUBPHASES[currentSubPhaseIndex + 1]
+        gameState.value.currentPlayerIndex = 0
+      } else {
+        // End of action phase
+        nextPhase()
+      }
     }
   }
   

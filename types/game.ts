@@ -12,16 +12,28 @@ export interface GamePhase {
   description: string
 }
 
-export interface ActionSubPhase {
+export interface SubPhase {
   id: string
-  name: string // 'Raid Orders', 'March Orders', 'Consolidate Power Orders'
+  name: string
   requiresTurnOrder: boolean // Whether this sub-phase uses Iron Throne track order
+}
+
+export interface ActionSubPhase extends SubPhase {
+  // Specific to Action phase subphases
+}
+
+export interface WesterosSubPhase extends SubPhase {
+  // Specific to Westeros phase subphases
+}
+
+export interface PlanningSubPhase extends SubPhase {
+  // Specific to Planning phase subphases
 }
 
 export interface GameState {
   currentRound: number // 1-10
   currentPhase: GamePhase
-  currentSubPhase?: ActionSubPhase
+  currentSubPhase?: SubPhase
   currentPlayerIndex: number
   ironThroneOrder: House[] // ordered array, index 0 = Iron Throne holder
   timeRemaining: number // seconds
@@ -64,6 +76,42 @@ export const GAME_PHASES: GamePhase[] = [
     name: 'Action',
     defaultDuration: 900, // 15 minutes
     description: 'Reveal and resolve orders'
+  }
+]
+
+export const WESTEROS_SUBPHASES: WesterosSubPhase[] = [
+  {
+    id: 'draw-cards',
+    name: 'Draw Westeros Cards',
+    requiresTurnOrder: false
+  },
+  {
+    id: 'advance-wildlings',
+    name: 'Advance Wildlings Track',
+    requiresTurnOrder: false
+  },
+  {
+    id: 'resolve-cards',
+    name: 'Resolve Westeros Cards',
+    requiresTurnOrder: false
+  }
+]
+
+export const PLANNING_SUBPHASES: PlanningSubPhase[] = [
+  {
+    id: 'assign-orders',
+    name: 'Assign Orders',
+    requiresTurnOrder: false
+  },
+  {
+    id: 'reveal-orders',
+    name: 'Reveal Orders',
+    requiresTurnOrder: false
+  },
+  {
+    id: 'messenger-raven',
+    name: 'Use Messenger Raven',
+    requiresTurnOrder: false
   }
 ]
 

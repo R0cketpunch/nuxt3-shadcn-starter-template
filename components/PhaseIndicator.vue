@@ -59,7 +59,22 @@
     </div>
 
     <!-- Phase Control -->
-    <div class="text-center">
+    <div class="space-y-2 text-center">
+      <!-- Sub-phase Navigation -->
+      <div v-if="currentSubPhase" class="space-y-2">
+        <Button
+          @click="advanceSubPhase"
+          size="sm"
+          variant="outline"
+          class="px-6"
+          :disabled="isGameComplete"
+        >
+          <ChevronRight class="mr-2 w-3 h-3" />
+          Next Sub-phase
+        </Button>
+      </div>
+      
+      <!-- Main Phase Navigation -->
       <Button
         @click="advancePhase"
         size="lg"
@@ -85,7 +100,7 @@
 
 <script setup lang="ts">
 import { ChevronRight, Trophy } from "lucide-vue-next";
-import type { GamePhase, ActionSubPhase } from "~/types/game";
+import type { GamePhase, SubPhase } from "~/types/game";
 import { GAME_PHASES, MAX_ROUNDS } from "~/types/game";
 import NumberFlow from "@number-flow/vue";
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
@@ -93,11 +108,12 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 interface Props {
   currentRound: number;
   currentPhase: GamePhase;
-  currentSubPhase?: ActionSubPhase;
+  currentSubPhase?: SubPhase;
 }
 
 interface Emits {
   (e: "advance-phase"): void;
+  (e: "advance-subphase"): void;
 }
 
 const props = defineProps<Props>();
@@ -145,5 +161,9 @@ const isCurrentPhase = (index: number) => {
 
 const advancePhase = () => {
   emit("advance-phase");
+};
+
+const advanceSubPhase = () => {
+  emit("advance-subphase");
 };
 </script>

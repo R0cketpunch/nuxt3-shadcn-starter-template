@@ -58,6 +58,7 @@
               :current-phase="gameState.currentPhase"
               :current-sub-phase="gameState.currentSubPhase"
               @advance-phase="advancePhase"
+              @advance-subphase="nextSubPhase"
             />
           </div>
 
