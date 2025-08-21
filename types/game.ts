@@ -15,7 +15,7 @@ export interface GamePhase {
 export interface ActionSubPhase {
   id: string
   name: string // 'Raid Orders', 'March Orders', 'Consolidate Power Orders'
-  requiresTurnOrder: boolean
+  requiresTurnOrder: boolean // Whether this sub-phase uses Iron Throne track order
 }
 
 export interface GameState {
@@ -81,8 +81,34 @@ export const ACTION_SUBPHASES: ActionSubPhase[] = [
   {
     id: 'consolidate',
     name: 'Consolidate Power Orders',
-    requiresTurnOrder: false
+    requiresTurnOrder: true
   }
 ]
 
 export const MAX_ROUNDS = 10
+
+// Faction availability by player count
+export const FACTION_AVAILABILITY: Record<number, string[]> = {
+  3: ['stark', 'lannister', 'baratheon'],
+  4: ['stark', 'lannister', 'baratheon', 'greyjoy'],
+  5: ['stark', 'lannister', 'baratheon', 'greyjoy', 'tyrell'],
+  6: ['stark', 'lannister', 'baratheon', 'greyjoy', 'tyrell', 'martell']
+}
+
+export const getAvailableHouses = (playerCount: number): House[] => {
+  const availableFactionIds = FACTION_AVAILABILITY[playerCount] || []
+  return HOUSES.filter(house => availableFactionIds.includes(house.id))
+}
+
+// Predefined Iron Throne track starting positions by player count
+export const IRON_THRONE_STARTING_POSITIONS: Record<number, string[]> = {
+  3: ['baratheon', 'lannister', 'stark'],
+  4: ['baratheon', 'lannister', 'stark', 'greyjoy'],
+  5: ['baratheon', 'lannister', 'stark', 'greyjoy', 'tyrell'],
+  6: ['baratheon', 'lannister', 'stark', 'martell', 'greyjoy', 'tyrell']
+}
+
+export const getStartingIronThroneOrder = (playerCount: number): House[] => {
+  const startingOrder = IRON_THRONE_STARTING_POSITIONS[playerCount] || []
+  return startingOrder.map(factionId => HOUSES.find(house => house.id === factionId)).filter(Boolean) as House[]
+}

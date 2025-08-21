@@ -1,5 +1,5 @@
-import type { GameState, House, GamePhase, ActionSubPhase, GameSettings } from '~/types/game'
-import { GAME_PHASES, ACTION_SUBPHASES, HOUSES, MAX_ROUNDS } from '~/types/game'
+import type { GameState, House, GameSettings } from '~/types/game'
+import { GAME_PHASES, ACTION_SUBPHASES, MAX_ROUNDS, getStartingIronThroneOrder } from '~/types/game'
 
 const STORAGE_KEY = 'agot-gm-game-state'
 const SETTINGS_KEY = 'agot-gm-settings'
@@ -64,16 +64,23 @@ export const useGameState = () => {
   watch(settings, saveGameState, { deep: true })
   
   const initializeGame = (selectedHouses: House[]) => {
+    // Get the predefined starting Iron Throne order for this player count
+    const startingOrder = getStartingIronThroneOrder(selectedHouses.length)
+    
+    // Map the predefined order to the actual selected houses with player names
+    const ironThroneOrder = startingOrder.map(predefinedHouse => {
+      const selectedHouse = selectedHouses.find(h => h.id === predefinedHouse.id)
+      return selectedHouse || predefinedHouse
+    })
+    
     gameState.value = {
       ...initialGameState,
-      ironThroneOrder: [...selectedHouses],
+      ironThroneOrder,
       currentPhase: GAME_PHASES[0]
     }
   }
   
   const nextPhase = () => {
-    const currentPhaseIndex = GAME_PHASES.findIndex(p => p.id === gameState.value.currentPhase.id)
-    
     if (gameState.value.currentPhase.id === 'action') {
       // End of round, advance to next round
       if (gameState.value.currentRound < MAX_ROUNDS) {
@@ -122,6 +129,14 @@ export const useGameState = () => {
   const setIronThroneOrder = (houses: House[]) => {
     gameState.value.ironThroneOrder = [...houses]
     gameState.value.currentPlayerIndex = 0
+  }
+  
+  const setCurrentPlayerIndex = (index: number) => {
+    gameState.value.currentPlayerIndex = index
+  }
+  
+  const togglePause = () => {
+    gameState.value.isPaused = !gameState.value.isPaused
   }
   
   const getCurrentPlayer = (): House | null => {
@@ -191,6 +206,8 @@ export const useGameState = () => {
     nextPlayer,
     previousPlayer,
     setIronThroneOrder,
+    setCurrentPlayerIndex,
+    togglePause,
     getCurrentPlayer,
     getNextPlayer,
     resetGame,

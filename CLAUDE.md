@@ -50,10 +50,37 @@ assets/css/        - Global styles (tailwind.css)
 
 ### Game Features
 - **Player Management**: Houses include optional playerName field for personalization
+- **Faction Restrictions**: Enforces official player count limitations (3-6 players with specific factions)
 - **Timer System**: Audio/visual alerts with customizable phase durations
-- **Turn Order**: Drag-and-drop Iron Throne track with player name display
+- **Iron Throne Track**: Determines turn order for Action Phase resolution (Raid → March → Consolidate)
+- **Turn Order Management**: Visual queue showing resolution order during Action sub-phases
 - **State Persistence**: LocalStorage with export/import functionality
 - **Responsive Design**: Mobile-first with tablet optimization
+
+### Faction Availability by Player Count
+- **6 Players**: All factions (Stark, Lannister, Greyjoy, Tyrell, Baratheon, Martell)
+- **5 Players**: All except Martell
+- **4 Players**: All except Martell and Tyrell  
+- **3 Players**: Only Stark, Lannister, and Baratheon
+- **Automatic Filtering**: Setup page shows only available factions for selected player count
+- **Balance Enforcement**: Prevents invalid faction combinations that could break game balance
+
+### Starting Iron Throne Track Positions
+- **6 Players**: Baratheon, Lannister, Stark, Martell, Greyjoy, Tyrell
+- **5 Players**: Baratheon, Lannister, Stark, Greyjoy, Tyrell
+- **4 Players**: Baratheon, Lannister, Stark, Greyjoy
+- **3 Players**: Baratheon, Lannister, Stark
+- **Fixed Setup**: Starting positions are predefined by official rules, not customizable during setup
+- **Dynamic During Play**: Track order only changes through Westeros card effects during gameplay
+
+### Iron Throne Track Mechanics
+- **Primary Function**: Determines resolution order during Action Phase
+- **Resolution Pattern**: ALL order types (Raid, March, Consolidate) resolve one-at-a-time in Iron Throne order
+- **Cycling System**: Players cycle through turn order until all orders of current type are resolved
+- **Tactical Balance**: Prevents any player from resolving all their orders before others can respond
+- **Visual Indicators**: Track shows "ACTIVE" status during Action Phase with resolution queue
+- **Player Tracking**: Current player highlighted, next player preview shown
+- **Westeros Reordering**: Track becomes editable during Westeros phase for influence track updates
 
 ### Development Notes
 - Uses Tailwind CSS 4 with Vite plugin (not PostCSS)

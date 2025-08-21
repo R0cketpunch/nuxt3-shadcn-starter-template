@@ -38,9 +38,20 @@
         <!-- House Selection -->
         <div v-if="selectedPlayerCount" class="space-y-4">
           <h2 class="text-xl font-semibold">Select Houses & Players ({{ selectedHouses.length }}/{{ selectedPlayerCount }})</h2>
-          <p class="text-sm text-muted-foreground">
-            Choose {{ selectedPlayerCount }} houses and assign player names.
-          </p>
+          <div class="space-y-2">
+            <p class="text-sm text-muted-foreground">
+              Choose {{ selectedPlayerCount }} houses and assign player names.
+            </p>
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              <div class="font-semibold text-blue-800 mb-1">Available Factions for {{ selectedPlayerCount }} Players:</div>
+              <div class="text-blue-700">
+                {{ availableHouses.map(h => h.name).join(', ') }}
+                <span v-if="selectedPlayerCount < 6" class="text-blue-600 italic">
+                  ({{ 6 - selectedPlayerCount }} faction{{ 6 - selectedPlayerCount > 1 ? 's' : '' }} excluded for balance)
+                </span>
+              </div>
+            </div>
+          </div>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
@@ -93,23 +104,28 @@
           </div>
         </div>
 
-        <!-- Iron Throne Order -->
+        <!-- Starting Iron Throne Order Preview -->
         <div v-if="selectedHouses.length === selectedPlayerCount" class="space-y-4">
-          <h2 class="text-xl font-semibold">Iron Throne Track Order</h2>
-          <p class="text-sm text-muted-foreground">
-            Drag and drop to arrange the initial Iron Throne track order. The first position holds the Iron Throne.
-          </p>
+          <h2 class="text-xl font-semibold">Starting Iron Throne Track Order</h2>
+          <div class="space-y-2">
+            <p class="text-sm text-muted-foreground">
+              The Iron Throne track starts with predefined positions based on the official rules. This order can only change during the game through Westeros card effects.
+            </p>
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              <div class="font-semibold text-blue-800 mb-1">Turn Order Mechanics:</div>
+              <div class="text-blue-700">
+                The Iron Throne track determines turn order during the <strong>Action Phase</strong>. All order types (Raid → March → Consolidate) 
+                resolve <strong>one at a time</strong> in Iron Throne order, cycling through until all orders are resolved.
+              </div>
+            </div>
+          </div>
           
           <div class="space-y-3">
             <div
-              v-for="(house, index) in ironThroneOrder"
+              v-for="(house, index) in startingIronThroneOrder"
               :key="house.id"
-              class="flex items-center p-4 rounded-lg border-2 cursor-move hover:shadow-md transition-all"
+              class="flex items-center p-4 rounded-lg border-2"
               :style="{ backgroundColor: house.color + '15', borderColor: house.color }"
-              draggable="true"
-              @dragstart="handleDragStart($event, index)"
-              @dragover="handleDragOver($event)"
-              @drop="handleDrop($event, index)"
             >
               <div class="flex items-center space-x-4">
                 <!-- Crown for Iron Throne holder -->
@@ -120,7 +136,7 @@
                     {{ house.name }}
                   </div>
                   <div class="text-sm font-medium">
-                    {{ house.playerName || `Player ${index + 1}` }}
+                    {{ getPlayerNameForHouse(house.id) || `Player ${index + 1}` }}
                   </div>
                   <div v-if="index === 0" class="text-xs text-muted-foreground">
                     (Iron Throne Holder)
@@ -128,8 +144,8 @@
                 </div>
               </div>
               
-              <div class="ml-auto">
-                <GripVertical class="w-4 h-4 text-muted-foreground" />
+              <div class="ml-auto text-xs text-muted-foreground">
+                Official Starting Position
               </div>
             </div>
           </div>
@@ -195,7 +211,7 @@
 
 <script setup lang="ts">
 import { CheckCircle, Crown, GripVertical, Play } from 'lucide-vue-next'
-import { HOUSES, GAME_PHASES } from '~/types/game'
+import { HOUSES, GAME_PHASES, getAvailableHouses, getStartingIronThroneOrder } from '~/types/game'
 import type { House } from '~/types/game'
 
 const gameStateManager = useGameState()
@@ -203,17 +219,21 @@ const router = useRouter()
 
 const selectedPlayerCount = ref<number>(0)
 const selectedHouses = ref<House[]>([])
-const ironThroneOrder = ref<House[]>([])
 const customDurations = ref<Record<string, number>>({})
 const errorMessage = ref('')
-const draggedIndex = ref<number>(-1)
 
-const availableHouses = HOUSES
+const availableHouses = computed(() => {
+  return selectedPlayerCount.value > 0 ? getAvailableHouses(selectedPlayerCount.value) : HOUSES
+})
+
+const startingIronThroneOrder = computed(() => {
+  return selectedPlayerCount.value > 0 ? getStartingIronThroneOrder(selectedPlayerCount.value) : []
+})
+
 const gamePhases = GAME_PHASES
 
 const canStartGame = computed(() => {
-  return selectedHouses.value.length === selectedPlayerCount.value && 
-         ironThroneOrder.value.length === selectedPlayerCount.value
+  return selectedHouses.value.length === selectedPlayerCount.value
 })
 
 const isHouseSelected = (houseId: string) => {
@@ -229,16 +249,16 @@ const getPlayerNumber = (houseId: string) => {
   return index + 1
 }
 
+const getPlayerNameForHouse = (houseId: string) => {
+  const selectedHouse = selectedHouses.value.find(h => h.id === houseId)
+  return selectedHouse?.playerName
+}
+
 const updatePlayerName = (houseId: string, event: Event) => {
   const target = event.target as HTMLInputElement
   const house = selectedHouses.value.find(h => h.id === houseId)
   if (house) {
     house.playerName = target.value
-    // Also update in iron throne order
-    const ironThroneHouse = ironThroneOrder.value.find(h => h.id === houseId)
-    if (ironThroneHouse) {
-      ironThroneHouse.playerName = target.value
-    }
   }
 }
 
@@ -247,41 +267,13 @@ const toggleHouseSelection = (house: House) => {
   
   if (isSelected) {
     selectedHouses.value = selectedHouses.value.filter(h => h.id !== house.id)
-    ironThroneOrder.value = ironThroneOrder.value.filter(h => h.id !== house.id)
   } else if (selectedHouses.value.length < selectedPlayerCount.value) {
     const newHouse = { 
       ...house, 
       playerName: `Player ${selectedHouses.value.length + 1}` 
     }
     selectedHouses.value.push(newHouse)
-    ironThroneOrder.value.push(newHouse)
   }
-}
-
-const handleDragStart = (event: DragEvent, index: number) => {
-  draggedIndex.value = index
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-  }
-}
-
-const handleDragOver = (event: DragEvent) => {
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
-}
-
-const handleDrop = (event: DragEvent, dropIndex: number) => {
-  event.preventDefault()
-  
-  if (draggedIndex.value === -1 || draggedIndex.value === dropIndex) return
-  
-  const draggedHouse = ironThroneOrder.value[draggedIndex.value]
-  ironThroneOrder.value.splice(draggedIndex.value, 1)
-  ironThroneOrder.value.splice(dropIndex, 0, draggedHouse)
-  
-  draggedIndex.value = -1
 }
 
 const formatDuration = (seconds: number) => {
@@ -298,11 +290,6 @@ const startGame = () => {
     return
   }
   
-  if (ironThroneOrder.value.length !== selectedPlayerCount.value) {
-    errorMessage.value = 'Please arrange the Iron Throne track order.'
-    return
-  }
-  
   try {
     // Set up custom durations
     const customPhaseDurations: Record<string, number> = {}
@@ -312,8 +299,8 @@ const startGame = () => {
       }
     })
     
-    // Initialize the game
-    gameStateManager.initializeGame(ironThroneOrder.value)
+    // Initialize the game with selected houses (Iron Throne order will be set automatically)
+    gameStateManager.initializeGame(selectedHouses.value)
     
     // Apply custom durations
     if (Object.keys(customPhaseDurations).length > 0) {
@@ -331,7 +318,6 @@ const startGame = () => {
 // Reset form when player count changes
 watch(selectedPlayerCount, () => {
   selectedHouses.value = []
-  ironThroneOrder.value = []
   errorMessage.value = ''
 })
 </script>
