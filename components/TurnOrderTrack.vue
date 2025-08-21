@@ -39,10 +39,10 @@
           `border-[${house.color}]`,
           {
             'ring-4 ring-yellow-400 ring-opacity-50 shadow-lg':
-              index === currentPlayerIndex,
-            'opacity-50': !isCurrentPlayerTurn(index),
+              index === currentPlayerIndex && isActionPhase,
+            'opacity-50': !isCurrentPlayerTurn(index) && isActionPhase,
             'cursor-move': allowReordering,
-            'cursor-pointer hover:scale-105': !allowReordering,
+            'cursor-pointer hover:scale-105': !allowReordering && isActionPhase,
           },
         ]"
         :style="{
@@ -50,7 +50,7 @@
           borderColor: house.color,
         }"
         :draggable="allowReordering"
-        @click="!allowReordering && setCurrentPlayer(index)"
+        @click="!allowReordering && isActionPhase && setCurrentPlayer(index)"
         @dragstart="handleDragStart($event, index)"
         @dragover="handleDragOver($event)"
         @drop="handleDrop($event, index)"
@@ -80,8 +80,8 @@
       </div>
     </div>
 
-    <!-- Current Player Indicator -->
-    <div v-if="currentPlayer" class="p-4 text-center rounded-lg border bg-card">
+    <!-- Current Player Indicator - only during Action Phase -->
+    <div v-if="currentPlayer && isActionPhase" class="p-4 text-center rounded-lg border bg-card">
       <div class="text-sm text-muted-foreground">Current Player</div>
       <div class="text-xl font-bold" :style="{ color: currentPlayer.color }">
         {{ currentPlayer.name }}
@@ -91,8 +91,8 @@
       </div>
     </div>
 
-    <!-- Turn Controls -->
-    <div class="flex justify-center space-x-2">
+    <!-- Turn Controls - only available during Action Phase -->
+    <div v-if="isActionPhase" class="flex justify-center space-x-2">
       <Button
         @click="previousPlayer"
         variant="outline"
@@ -113,8 +113,8 @@
       </Button>
     </div>
 
-    <!-- Next Player Preview -->
-    <div v-if="nextPlayer" class="text-sm text-center text-muted-foreground">
+    <!-- Next Player Preview - only during Action Phase -->
+    <div v-if="nextPlayer && isActionPhase" class="text-sm text-center text-muted-foreground">
       Next:
       <span :style="{ color: nextPlayer.color }" class="font-semibold">{{
         nextPlayer.name
