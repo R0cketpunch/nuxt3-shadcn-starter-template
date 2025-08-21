@@ -13,8 +13,12 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@pinia/nuxt',
     '@vueuse/nuxt',
+    '@nuxtjs/color-mode',
     'shadcn-nuxt'
   ],
+  colorMode: {
+    classSuffix: ''
+  },
   css: ['~/assets/css/tailwind.css'],
   shadcn: {
     /**
