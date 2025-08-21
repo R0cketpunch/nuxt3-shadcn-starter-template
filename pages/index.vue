@@ -35,7 +35,7 @@
     </header>
 
     <!-- Main Dashboard -->
-    <main class="container px-4 py-6 mx-auto">
+    <main class="container px-4 py-6 mx-auto" v-auto-animate>
       <div v-if="!hasGameStarted" class="py-12 text-center">
         <div class="space-y-4">
           <h2 class="text-xl font-semibold">No Game in Progress</h2>
@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div v-else class="space-y-6">
+      <div v-else class="space-y-6" v-auto-animate>
         <!-- Phase and Round Info -->
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <!-- Phase Indicator -->
@@ -226,6 +226,8 @@ import {
 } from "lucide-vue-next";
 import { ACTION_SUBPHASES } from "~/types/game";
 import type { House } from "~/types/game";
+import NumberFlow from "@number-flow/vue";
+import { vAutoAnimate } from "@formkit/auto-animate/vue";
 
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;

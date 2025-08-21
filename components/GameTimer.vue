@@ -2,26 +2,58 @@
   <div class="flex flex-col items-center space-y-4">
     <!-- Timer Display -->
     <div class="relative">
-      <div 
-        class="w-32 h-32 sm:w-48 sm:h-48 rounded-full border-8 flex items-center justify-center transition-colors duration-300"
+      <div
+        class="flex justify-center items-center w-32 h-32 rounded-full border-8 transition-colors duration-300 sm:w-48 sm:h-48"
         :class="timerBorderClass"
       >
         <div class="text-center">
-          <div 
-            class="text-2xl sm:text-4xl font-mono font-bold transition-colors duration-300"
-            :class="timer.getTimerColor()"
-          >
-            {{ timer.formatTime(timer.timeRemaining.value) }}
-          </div>
+          <NumberFlowGroup>
+            <div
+              :style="{
+                fontVariantNumeric: 'tabular-nums',
+                '--number-flow-char-height': '0.85em',
+              }"
+              class="flex justify-center items-baseline text-2xl font-semibold transition-colors duration-300 sm:text-4xl"
+              :class="timer.getTimerColor()"
+            >
+              <NumberFlow
+                v-if="timeComponents.hh > 0"
+                :trend="-1"
+                :value="timeComponents.hh"
+                :format="{ minimumIntegerDigits: 2 }"
+              />
+              <NumberFlow
+                v-if="timeComponents.hh > 0"
+                prefix=":"
+                :trend="-1"
+                :value="timeComponents.mm"
+                :digits="{ 1: { max: 5 } }"
+                :format="{ minimumIntegerDigits: 2 }"
+              />
+              <NumberFlow
+                v-else
+                :trend="-1"
+                :value="timeComponents.mm"
+                :format="{ minimumIntegerDigits: 1 }"
+              />
+              <NumberFlow
+                prefix=":"
+                :trend="-1"
+                :value="timeComponents.ss"
+                :digits="{ 1: { max: 5 } }"
+                :format="{ minimumIntegerDigits: 2 }"
+              />
+            </div>
+          </NumberFlowGroup>
           <div class="text-xs sm:text-sm text-muted-foreground">
             {{ phaseText }}
           </div>
         </div>
       </div>
-      
+
       <!-- Progress Ring -->
-      <svg 
-        class="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 -rotate-90"
+      <svg
+        class="absolute top-0 left-0 w-32 h-32 -rotate-90 sm:w-48 sm:h-48"
         viewBox="0 0 100 100"
       >
         <circle
@@ -38,7 +70,7 @@
         />
       </svg>
     </div>
-    
+
     <!-- Timer Controls -->
     <div class="flex space-x-2">
       <Button
@@ -47,10 +79,10 @@
         size="sm"
         class="px-6"
       >
-        <Play class="w-4 h-4 mr-2" />
+        <Play class="mr-2 w-4 h-4" />
         Start
       </Button>
-      
+
       <Button
         v-if="timer.isActive.value && !timer.isPaused.value"
         @click="timer.pauseTimer"
@@ -58,31 +90,26 @@
         size="sm"
         class="px-6"
       >
-        <Pause class="w-4 h-4 mr-2" />
+        <Pause class="mr-2 w-4 h-4" />
         Pause
       </Button>
-      
+
       <Button
         v-if="timer.isActive.value && timer.isPaused.value"
         @click="timer.resumeTimer"
         size="sm"
         class="px-6"
       >
-        <Play class="w-4 h-4 mr-2" />
+        <Play class="mr-2 w-4 h-4" />
         Resume
       </Button>
-      
-      <Button
-        @click="resetTimer"
-        variant="outline"
-        size="sm"
-        class="px-6"
-      >
-        <RotateCcw class="w-4 h-4 mr-2" />
+
+      <Button @click="resetTimer" variant="outline" size="sm" class="px-6">
+        <RotateCcw class="mr-2 w-4 h-4" />
         Reset
       </Button>
     </div>
-    
+
     <!-- Quick Time Adjustments -->
     <div class="flex space-x-2">
       <Button
@@ -122,38 +149,43 @@
 </template>
 
 <script setup lang="ts">
-import { Play, Pause, RotateCcw } from 'lucide-vue-next'
-
+import { Play, Pause, RotateCcw } from "lucide-vue-next";
+import NumberFlow, { NumberFlowGroup } from "@number-flow/vue";
+import { vAutoAnimate } from "@formkit/auto-animate/vue";
 interface Props {
-  duration?: number
-  phaseText?: string
+  duration?: number;
+  phaseText?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   duration: 300,
-  phaseText: 'Timer'
-})
+  phaseText: "Timer",
+});
 
-const timer = useGameTimer()
-const circumference = 2 * Math.PI * 45
+const timer = useGameTimer();
+const circumference = 2 * Math.PI * 45;
+
+const timeComponents = computed(() => {
+  return timer.getTimeComponents(timer.timeRemaining.value);
+});
 
 const timerBorderClass = computed(() => {
-  if (timer.timeRemaining.value > 60) return 'border-green-500'
-  if (timer.timeRemaining.value > 30) return 'border-yellow-500'
-  return 'border-red-500'
-})
+  if (timer.timeRemaining.value > 60) return "border-green-500";
+  if (timer.timeRemaining.value > 30) return "border-yellow-500";
+  return "border-red-500";
+});
 
 const strokeDashoffset = computed(() => {
-  if (props.duration === 0) return circumference
-  const progress = timer.timeRemaining.value / props.duration
-  return circumference * (1 - progress)
-})
+  if (props.duration === 0) return circumference;
+  const progress = timer.timeRemaining.value / props.duration;
+  return circumference * (1 - progress);
+});
 
 const startTimer = () => {
-  timer.startTimer(props.duration)
-}
+  timer.startTimer(props.duration);
+};
 
 const resetTimer = () => {
-  timer.resetTimer(props.duration)
-}
+  timer.resetTimer(props.duration);
+};
 </script>
