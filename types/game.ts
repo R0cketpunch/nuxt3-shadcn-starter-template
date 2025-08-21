@@ -38,6 +38,8 @@ export interface GameState {
   currentSubPhase?: SubPhase;
   currentPlayerIndex: number;
   ironThroneOrder: House[]; // ordered array, index 0 = Iron Throne holder
+  fiefdomsOrder: House[]; // ordered array, index 0 = Fiefdoms track leader
+  kingsCourtOrder: House[]; // ordered array, index 0 = King's Court track leader
   timeRemaining: number; // seconds
   isPaused: boolean;
   isTimerActive: boolean;
@@ -244,7 +246,7 @@ export const getAvailableHouses = (playerCount: number): House[] => {
   return HOUSES.filter((house) => availableFactionIds.includes(house.id));
 };
 
-// Predefined Iron Throne track starting positions by player count
+// Predefined influence track starting positions by player count
 export const IRON_THRONE_STARTING_POSITIONS: Record<number, string[]> = {
   3: ["baratheon", "lannister", "stark"],
   4: ["baratheon", "lannister", "stark", "greyjoy"],
@@ -252,8 +254,36 @@ export const IRON_THRONE_STARTING_POSITIONS: Record<number, string[]> = {
   6: ["baratheon", "lannister", "stark", "martell", "greyjoy", "tyrell"],
 };
 
+export const FIEFDOMS_STARTING_POSITIONS: Record<number, string[]> = {
+  3: ["stark", "baratheon", "lannister"],
+  4: ["greyjoy", "stark", "baratheon", "lannister"],
+  5: ["greyjoy", "tyrell", "stark", "baratheon", "lannister"],
+  6: ["greyjoy", "tyrell", "martell", "stark", "baratheon", "lannister"],
+};
+
+export const KINGS_COURT_STARTING_POSITIONS: Record<number, string[]> = {
+  3: ["lannister", "stark", "baratheon"],
+  4: ["lannister", "stark", "baratheon", "greyjoy"],
+  5: ["lannister", "stark", "baratheon", "tyrell", "greyjoy"],
+  6: ["lannister", "stark", "martell", "baratheon", "tyrell", "greyjoy"],
+};
+
 export const getStartingIronThroneOrder = (playerCount: number): House[] => {
   const startingOrder = IRON_THRONE_STARTING_POSITIONS[playerCount] || [];
+  return startingOrder
+    .map((factionId) => HOUSES.find((house) => house.id === factionId))
+    .filter(Boolean) as House[];
+};
+
+export const getStartingFiefdomsOrder = (playerCount: number): House[] => {
+  const startingOrder = FIEFDOMS_STARTING_POSITIONS[playerCount] || [];
+  return startingOrder
+    .map((factionId) => HOUSES.find((house) => house.id === factionId))
+    .filter(Boolean) as House[];
+};
+
+export const getStartingKingsCourtOrder = (playerCount: number): House[] => {
+  const startingOrder = KINGS_COURT_STARTING_POSITIONS[playerCount] || [];
   return startingOrder
     .map((factionId) => HOUSES.find((house) => house.id === factionId))
     .filter(Boolean) as House[];

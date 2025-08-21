@@ -1,5 +1,5 @@
-import type { GameState, House, GameSettings } from '~/types/game'
-import { GAME_PHASES, WESTEROS_SUBPHASES, PLANNING_SUBPHASES, ACTION_SUBPHASES, MAX_ROUNDS, getStartingIronThroneOrder } from '~/types/game'
+import type { GameState, House, GameSettings, SubPhase } from '~/types/game'
+import { GAME_PHASES, WESTEROS_SUBPHASES, PLANNING_SUBPHASES, ACTION_SUBPHASES, MAX_ROUNDS, getStartingIronThroneOrder, getStartingFiefdomsOrder, getStartingKingsCourtOrder } from '~/types/game'
 
 const STORAGE_KEY = 'agot-gm-game-state'
 const SETTINGS_KEY = 'agot-gm-settings'
@@ -11,6 +11,8 @@ export const useGameState = () => {
     currentSubPhase: undefined,
     currentPlayerIndex: 0,
     ironThroneOrder: [],
+    fiefdomsOrder: [],
+    kingsCourtOrder: [],
     timeRemaining: 0,
     isPaused: false,
     isTimerActive: false
@@ -64,11 +66,25 @@ export const useGameState = () => {
   watch(settings, saveGameState, { deep: true })
   
   const initializeGame = (selectedHouses: House[]) => {
-    // Get the predefined starting Iron Throne order for this player count
-    const startingOrder = getStartingIronThroneOrder(selectedHouses.length)
+    const playerCount = selectedHouses.length
     
-    // Map the predefined order to the actual selected houses with player names
-    const ironThroneOrder = startingOrder.map(predefinedHouse => {
+    // Get the predefined starting orders for all three tracks
+    const startingIronThrone = getStartingIronThroneOrder(playerCount)
+    const startingFiefdoms = getStartingFiefdomsOrder(playerCount)
+    const startingKingsCourt = getStartingKingsCourtOrder(playerCount)
+    
+    // Map the predefined orders to the actual selected houses with player names
+    const ironThroneOrder = startingIronThrone.map(predefinedHouse => {
+      const selectedHouse = selectedHouses.find(h => h.id === predefinedHouse.id)
+      return selectedHouse || predefinedHouse
+    })
+    
+    const fiefdomsOrder = startingFiefdoms.map(predefinedHouse => {
+      const selectedHouse = selectedHouses.find(h => h.id === predefinedHouse.id)
+      return selectedHouse || predefinedHouse
+    })
+    
+    const kingsCourtOrder = startingKingsCourt.map(predefinedHouse => {
       const selectedHouse = selectedHouses.find(h => h.id === predefinedHouse.id)
       return selectedHouse || predefinedHouse
     })
@@ -76,6 +92,8 @@ export const useGameState = () => {
     gameState.value = {
       ...initialGameState,
       ironThroneOrder,
+      fiefdomsOrder,
+      kingsCourtOrder,
       currentPhase: GAME_PHASES[1], // Start with Planning phase in round 1 (Westeros is skipped)
       currentSubPhase: PLANNING_SUBPHASES[0], // Start with Assign Orders
       gameStartTime: Date.now() // Save timestamp when game starts
@@ -157,6 +175,14 @@ export const useGameState = () => {
     gameState.value.currentPlayerIndex = 0
   }
   
+  const setFiefdomsOrder = (houses: House[]) => {
+    gameState.value.fiefdomsOrder = [...houses]
+  }
+  
+  const setKingsCourtOrder = (houses: House[]) => {
+    gameState.value.kingsCourtOrder = [...houses]
+  }
+  
   const setCurrentPlayerIndex = (index: number) => {
     gameState.value.currentPlayerIndex = index
   }
@@ -223,6 +249,74 @@ export const useGameState = () => {
   const updateSettings = (newSettings: GameSettings) => {
     settings.value = { ...newSettings }
   }
+
+  const getNextAction = (): { action: 'nextPlayer' | 'nextSubPhase' | 'nextPhase' | 'complete'; label: string } => {
+    if (isGameComplete()) {
+      return { action: 'complete', label: 'Game Complete' }
+    }
+
+    const currentSubPhase = gameState.value.currentSubPhase
+    
+    // If we have a sub-phase that requires turn order, check if we need to advance player
+    if (currentSubPhase?.requiresTurnOrder) {
+      // For turn order sub-phases, we cycle through players
+      return { action: 'nextPlayer', label: 'Next Player' }
+    }
+    
+    // If we have a sub-phase (turn order or simultaneous), advance to next sub-phase
+    if (currentSubPhase) {
+      const currentPhaseId = gameState.value.currentPhase.id
+      let subPhases: SubPhase[] = []
+      
+      if (currentPhaseId === 'westeros') {
+        subPhases = WESTEROS_SUBPHASES
+      } else if (currentPhaseId === 'planning') {
+        subPhases = PLANNING_SUBPHASES
+      } else if (currentPhaseId === 'action') {
+        subPhases = ACTION_SUBPHASES
+      }
+      
+      const currentSubPhaseIndex = subPhases.findIndex(sp => sp.id === currentSubPhase.id)
+      
+      // If there are more sub-phases, go to next sub-phase
+      if (currentSubPhaseIndex < subPhases.length - 1) {
+        return { action: 'nextSubPhase', label: 'Next Sub-phase' }
+      } else {
+        // This is the last sub-phase, advance to next phase
+        if (gameState.value.currentPhase.id === 'action') {
+          return { action: 'nextPhase', label: 'Next Round' }
+        } else {
+          return { action: 'nextPhase', label: 'Next Phase' }
+        }
+      }
+    }
+    
+    // No sub-phase, advance to next phase
+    if (gameState.value.currentPhase.id === 'action') {
+      return { action: 'nextPhase', label: 'Next Round' }
+    } else {
+      return { action: 'nextPhase', label: 'Next Phase' }
+    }
+  }
+
+  const continueGame = () => {
+    const nextAction = getNextAction()
+    
+    switch (nextAction.action) {
+      case 'nextPlayer':
+        nextPlayer()
+        break
+      case 'nextSubPhase':
+        nextSubPhase()
+        break
+      case 'nextPhase':
+        nextPhase()
+        break
+      case 'complete':
+        // Game is complete, no action needed
+        break
+    }
+  }
   
   // Initialize on mount
   onMounted(() => {
@@ -238,6 +332,8 @@ export const useGameState = () => {
     nextPlayer,
     previousPlayer,
     setIronThroneOrder,
+    setFiefdomsOrder,
+    setKingsCourtOrder,
     setCurrentPlayerIndex,
     togglePause,
     getCurrentPlayer,
@@ -249,6 +345,8 @@ export const useGameState = () => {
     isGameComplete,
     loadGameState,
     saveGameState,
-    updateSettings
+    updateSettings,
+    getNextAction,
+    continueGame
   }
 }
