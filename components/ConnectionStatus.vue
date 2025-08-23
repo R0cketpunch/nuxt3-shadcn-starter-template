@@ -5,6 +5,7 @@
       :class="statusClasses"
     />
     <span class="text-muted-foreground">{{ statusText }}</span>
+    <span class="text-xs text-muted-foreground/70 uppercase">{{ connectionTypeText }}</span>
   </div>
 </template>
 
@@ -14,6 +15,7 @@ import { computed } from 'vue'
 interface Props {
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error'
   isConnected: boolean
+  connectionType?: string
 }
 
 const props = defineProps<Props>()
@@ -44,5 +46,9 @@ const statusText = computed(() => {
     default:
       return 'Offline'
   }
+})
+
+const connectionTypeText = computed(() => {
+  return props.connectionType || 'unknown'
 })
 </script>

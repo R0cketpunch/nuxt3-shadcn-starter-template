@@ -28,8 +28,8 @@ export const useGameState = () => {
   const gameState = ref<GameState>({ ...initialGameState })
   const settings = ref<GameSettings>({ ...initialSettings })
   
-  // WebSocket connection
-  const { isConnected, connectionStatus, send, onMessage, connect, disconnect } = useWebSocket()
+  // Real-time connection (WebSocket for local, SSE for production)
+  const { isConnected, connectionStatus, send, onMessage, connect, disconnect, connectionType } = useRealtimeSync()
   const isReceivingUpdate = ref(false)
   
   // Load state from localStorage
@@ -488,8 +488,9 @@ export const useGameState = () => {
     updateSettings,
     getNextAction,
     continueGame,
-    // WebSocket connection status
+    // Real-time connection status
     isConnected: readonly(isConnected),
-    connectionStatus: readonly(connectionStatus)
+    connectionStatus: readonly(connectionStatus),
+    connectionType: readonly(ref(connectionType))
   }
 }

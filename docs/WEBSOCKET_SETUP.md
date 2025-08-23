@@ -1,13 +1,25 @@
 # Real-time Cross-Device Synchronization
 
-This application now supports real-time synchronization between multiple devices using WebSockets.
+This application supports real-time synchronization between multiple devices using different technologies based on the deployment environment.
+
+## Dual-Mode Implementation
+
+### Local Development (WebSocket)
+- Uses native WebSocket server on port 3001
+- Full bidirectional real-time communication
+- Suitable for local development with persistent server
+
+### Production/Vercel (Server-Sent Events)
+- Uses Server-Sent Events (SSE) for real-time updates
+- Works with serverless functions on Vercel
+- One-way streaming from server to client with API calls for updates
 
 ## How It Works
 
-1. **WebSocket Server**: A WebSocket server runs on port 3001 (configurable via `NUXT_WS_PORT`)
-2. **Client Connection**: Each browser tab/device connects to the WebSocket server automatically
-3. **State Broadcasting**: When game state changes on one device, it's immediately broadcast to all other connected devices
-4. **Connection Status**: The navbar shows the current connection status with a colored indicator
+1. **Environment Detection**: Automatically detects local vs production environment
+2. **Client Connection**: Each browser tab/device connects using the appropriate method
+3. **State Broadcasting**: Game state changes are broadcast to all connected devices
+4. **Connection Status**: The navbar shows connection status and type (WebSocket/SSE)
 
 ## Connection States
 
@@ -34,10 +46,19 @@ This application now supports real-time synchronization between multiple devices
 
 ## Usage
 
+### Local Development
 1. Start the development server: `npm run dev`
-2. Open the app on multiple devices (laptop, phone, tablet)
-3. Make changes on one device and watch them appear instantly on others
-4. Connection status is visible in the top-right corner
+2. WebSocket server automatically starts on port 3001
+3. Open `http://localhost:3000` on multiple devices on the same network
+4. Changes sync instantly via WebSocket
+
+### Production (Vercel)
+1. Deploy to Vercel: `vercel deploy`
+2. Open the deployed URL on multiple devices
+3. Changes sync via Server-Sent Events (SSE)
+4. Connection status shows "SSE" in the navbar
+
+The system automatically detects the environment and uses the appropriate technology.
 
 ## Configuration
 
@@ -50,8 +71,20 @@ NUXT_WS_PORT=3001
 
 ## Technical Details
 
+### WebSocket Mode (Local)
 - Uses native WebSocket API (no external dependencies like Socket.io)
-- Server runs alongside Nuxt development/production server
-- Broadcasts game state, settings, and reset events
+- Server runs alongside Nuxt development server on port 3001
+- Full bidirectional communication with heartbeat system
 - Each client gets a unique ID for message routing
-- Inactive connections are cleaned up automatically
+
+### SSE Mode (Production)
+- Uses Server-Sent Events for server-to-client streaming
+- API endpoints handle client-to-server updates via POST requests
+- Compatible with Vercel's serverless function architecture
+- Automatic connection cleanup after 60 seconds of inactivity
+
+### Common Features
+- Broadcasts game state, settings, and reset events
+- Automatic reconnection with exponential backoff
+- Connection status indicator with type display
+- Graceful fallback to localStorage for same-device sync

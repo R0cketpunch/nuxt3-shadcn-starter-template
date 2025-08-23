@@ -8,7 +8,8 @@
             <client-only>
                 <ConnectionStatus 
                     :connection-status="connectionStatus" 
-                    :is-connected="isConnected" 
+                    :is-connected="isConnected"
+                    :connection-type="connectionType"
                 />
                 <button class="flex px-2 py-1 rounded-md" @click="toggleDark()">
                     <svg v-if="isDark"  class="h-8 w-8 mr-2 p-1" :class="isDark == 'light' ? 'active':''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -27,7 +28,7 @@
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 
-const { isConnected, connectionStatus } = useGameState();
+const { isConnected, connectionStatus, connectionType } = useGameState();
 </script>
 
 <style lang="postcss" scoped>
