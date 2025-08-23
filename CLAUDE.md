@@ -13,7 +13,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Environment Variables
 
+### WebSocket (Local Development)
 - `NUXT_WS_PORT` - WebSocket server port (default: 3001)
+
+### Pusher (Recommended for Production)
+- `NUXT_PUBLIC_PUSHER_KEY` - Pusher public key
+- `NUXT_PUBLIC_PUSHER_CLUSTER` - Pusher cluster (e.g., us2)
+- `NUXT_PUSHER_APP_ID` - Pusher app ID (server-only)
+- `NUXT_PUSHER_SECRET` - Pusher secret (server-only)
 
 ## Architecture
 
@@ -59,7 +66,7 @@ assets/css/        - Global styles (tailwind.css)
 - **Iron Throne Track**: Determines turn order for Action Phase resolution (Raid → March → Consolidate)
 - **Turn Order Management**: Visual queue showing resolution order during Action sub-phases
 - **State Persistence**: LocalStorage with export/import functionality
-- **Real-time Sync**: WebSocket-based cross-device synchronization with connection status indicator
+- **Real-time Sync**: Multi-tier synchronization (Pusher > WebSocket > SSE) with connection status indicator
 - **Responsive Design**: Mobile-first with tablet optimization
 
 ### Faction Availability by Player Count
@@ -101,5 +108,7 @@ assets/css/        - Global styles (tailwind.css)
 - **@tanstack/vue-table** - Table components
 - **tw-animate-css** - Additional Tailwind animations
 - **tailwindcss-animate** - Built-in animation utilities
-- **ws** - WebSocket server for real-time cross-device synchronization
+- **pusher** - Server-side Pusher client for real-time events
+- **pusher-js** - Client-side Pusher library
+- **ws** - WebSocket server for local development
 - **@types/ws** - TypeScript definitions for ws

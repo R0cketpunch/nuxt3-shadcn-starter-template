@@ -80,7 +80,7 @@ export const useGameState = () => {
     }
   }, { deep: true })
   
-  // Broadcast state changes to other devices via WebSocket
+  // Broadcast state changes to other devices
   const broadcastStateChange = (type: 'gameState' | 'settings' | 'reset', data: any) => {
     if (typeof window !== 'undefined') {
       // First, use localStorage for same-tab synchronization (keeps existing functionality)
@@ -91,14 +91,20 @@ export const useGameState = () => {
       localStorage.setItem('agot-gm-broadcast', JSON.stringify(broadcastData))
       localStorage.removeItem('agot-gm-broadcast') // Trigger storage event
       
-      // Then broadcast via WebSocket for cross-device sync
+      // Then broadcast via real-time connection for cross-device sync
       if (isConnected.value) {
-        send({
-          type,
-          data,
-          timestamp: Date.now(),
-          clientId: 'client' // Will be replaced by server with actual client ID
-        })
+        if (connectionType === 'pusher') {
+          // For Pusher, use event names directly
+          send(type, data)
+        } else {
+          // For WebSocket/SSE, use the original message format
+          send({
+            type,
+            data,
+            timestamp: Date.now(),
+            clientId: 'client'
+          })
+        }
       }
     }
   }
@@ -170,10 +176,47 @@ export const useGameState = () => {
       }
       
       window.addEventListener('storage', handleStorageChange)
-      onMessage('gameState', handleWebSocketGameState)
-      onMessage('settings', handleWebSocketSettings)
-      onMessage('reset', handleWebSocketReset)
-      onMessage('initial', handleWebSocketInitial)
+      
+      if (connectionType === 'pusher') {
+        // For Pusher, events come directly with data
+        onMessage('gameState', (data: any) => {
+          console.log('Received game state update from Pusher:', data)
+          isReceivingUpdate.value = true
+          gameState.value = { ...initialGameState, ...data }
+          nextTick(() => {
+            isReceivingUpdate.value = false
+          })
+        })
+        
+        onMessage('settings', (data: any) => {
+          console.log('Received settings update from Pusher:', data)
+          isReceivingUpdate.value = true
+          settings.value = { ...initialSettings, ...data }
+          nextTick(() => {
+            isReceivingUpdate.value = false
+          })
+        })
+        
+        onMessage('reset', () => {
+          console.log('Received reset from Pusher')
+          isReceivingUpdate.value = true
+          gameState.value = { ...initialGameState }
+          settings.value = { ...initialSettings }
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(STORAGE_KEY)
+            localStorage.removeItem(SETTINGS_KEY)
+          }
+          nextTick(() => {
+            isReceivingUpdate.value = false
+          })
+        })
+      } else {
+        // For WebSocket/SSE, events come wrapped in message objects
+        onMessage('gameState', handleWebSocketGameState)
+        onMessage('settings', handleWebSocketSettings)
+        onMessage('reset', handleWebSocketReset)
+        onMessage('initial', handleWebSocketInitial)
+      }
       
       // Return cleanup function
       return () => {

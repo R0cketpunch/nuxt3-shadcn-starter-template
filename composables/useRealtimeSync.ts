@@ -1,12 +1,24 @@
 export const useRealtimeSync = () => {
-  // Detect if we're running in development (with WebSocket) or production (with SSE)
-  const isDevelopment = process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+  // Check if Pusher is configured (preferred for production)
+  const hasPusherConfig = typeof window !== 'undefined' && process.env.NUXT_PUBLIC_PUSHER_KEY
   
-  // Use WebSocket for local development, SSE for production/Vercel
-  const connection = isDevelopment ? useWebSocket() : useSSE()
+  // Determine connection type based on environment and configuration
+  let connection: any
+  let connectionType: string
+  
+  if (hasPusherConfig) {
+    // Use Pusher for real-time sync if configured
+    connection = usePusher()
+    connectionType = 'pusher'
+  } else {
+    // Fallback to WebSocket (local) or SSE (production)
+    const isDevelopment = process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+    connection = isDevelopment ? useWebSocket() : useSSE()
+    connectionType = isDevelopment ? 'websocket' : 'sse'
+  }
   
   return {
     ...connection,
-    connectionType: isDevelopment ? 'websocket' : 'sse'
+    connectionType
   }
 }
