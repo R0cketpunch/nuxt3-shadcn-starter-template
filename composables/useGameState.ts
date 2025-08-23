@@ -28,6 +28,10 @@ export const useGameState = () => {
   const gameState = ref<GameState>({ ...initialGameState })
   const settings = ref<GameSettings>({ ...initialSettings })
   
+  // WebSocket connection
+  const { isConnected, connectionStatus, send, onMessage, connect, disconnect } = useWebSocket()
+  const isReceivingUpdate = ref(false)
+  
   // Load state from localStorage
   const loadGameState = () => {
     if (typeof window === 'undefined') return
@@ -62,19 +66,40 @@ export const useGameState = () => {
   }
   
   // Watch for changes and auto-save
-  watch(gameState, saveGameState, { deep: true })
-  watch(settings, saveGameState, { deep: true })
+  watch(gameState, () => {
+    if (!isReceivingUpdate.value) {
+      saveGameState()
+      broadcastStateChange('gameState', gameState.value)
+    }
+  }, { deep: true })
   
-  // Broadcast state changes to other tabs/devices via localStorage events
-  const broadcastStateChange = () => {
+  watch(settings, () => {
+    if (!isReceivingUpdate.value) {
+      saveGameState()
+      broadcastStateChange('settings', settings.value)
+    }
+  }, { deep: true })
+  
+  // Broadcast state changes to other devices via WebSocket
+  const broadcastStateChange = (type: 'gameState' | 'settings' | 'reset', data: any) => {
     if (typeof window !== 'undefined') {
-      // Use a separate localStorage key for broadcasting
+      // First, use localStorage for same-tab synchronization (keeps existing functionality)
       const broadcastData = {
-        gameState: gameState.value,
+        [type]: data,
         timestamp: Date.now()
       }
       localStorage.setItem('agot-gm-broadcast', JSON.stringify(broadcastData))
       localStorage.removeItem('agot-gm-broadcast') // Trigger storage event
+      
+      // Then broadcast via WebSocket for cross-device sync
+      if (isConnected.value) {
+        send({
+          type,
+          data,
+          timestamp: Date.now(),
+          clientId: 'client' // Will be replaced by server with actual client ID
+        })
+      }
     }
   }
   
@@ -86,14 +111,69 @@ export const useGameState = () => {
           try {
             const newState = JSON.parse(event.newValue)
             console.log('Received state update from another tab:', newState)
+            isReceivingUpdate.value = true
             gameState.value = { ...initialGameState, ...newState }
+            nextTick(() => {
+              isReceivingUpdate.value = false
+            })
           } catch (error) {
             console.warn('Failed to parse state update:', error)
           }
         }
       }
       
+      // Handle WebSocket messages
+      const handleWebSocketGameState = (data: any) => {
+        console.log('Received game state update from WebSocket:', data)
+        isReceivingUpdate.value = true
+        gameState.value = { ...initialGameState, ...data }
+        nextTick(() => {
+          isReceivingUpdate.value = false
+        })
+      }
+      
+      const handleWebSocketSettings = (data: any) => {
+        console.log('Received settings update from WebSocket:', data)
+        isReceivingUpdate.value = true
+        settings.value = { ...initialSettings, ...data }
+        nextTick(() => {
+          isReceivingUpdate.value = false
+        })
+      }
+      
+      const handleWebSocketReset = () => {
+        console.log('Received reset from WebSocket')
+        isReceivingUpdate.value = true
+        gameState.value = { ...initialGameState }
+        settings.value = { ...initialSettings }
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(STORAGE_KEY)
+          localStorage.removeItem(SETTINGS_KEY)
+        }
+        nextTick(() => {
+          isReceivingUpdate.value = false
+        })
+      }
+      
+      const handleWebSocketInitial = (data: any) => {
+        console.log('Received initial state from WebSocket:', data)
+        if (data.gameState) {
+          isReceivingUpdate.value = true
+          gameState.value = { ...initialGameState, ...data.gameState }
+        }
+        if (data.settings) {
+          settings.value = { ...initialSettings, ...data.settings }
+        }
+        nextTick(() => {
+          isReceivingUpdate.value = false
+        })
+      }
+      
       window.addEventListener('storage', handleStorageChange)
+      onMessage('gameState', handleWebSocketGameState)
+      onMessage('settings', handleWebSocketSettings)
+      onMessage('reset', handleWebSocketReset)
+      onMessage('initial', handleWebSocketInitial)
       
       // Return cleanup function
       return () => {
@@ -156,7 +236,7 @@ export const useGameState = () => {
       gameState.value.currentSubPhase = ACTION_SUBPHASES[0] // Raid Orders
       gameState.value.currentPlayerIndex = 0
     }
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const nextSubPhase = () => {
@@ -194,14 +274,14 @@ export const useGameState = () => {
         return
       }
     }
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const nextPlayer = () => {
     if (gameState.value.ironThroneOrder.length === 0) return
     
     gameState.value.currentPlayerIndex = (gameState.value.currentPlayerIndex + 1) % gameState.value.ironThroneOrder.length
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const previousPlayer = () => {
@@ -210,23 +290,23 @@ export const useGameState = () => {
     gameState.value.currentPlayerIndex = gameState.value.currentPlayerIndex === 0 
       ? gameState.value.ironThroneOrder.length - 1 
       : gameState.value.currentPlayerIndex - 1
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const setIronThroneOrder = (houses: House[]) => {
     gameState.value.ironThroneOrder = [...houses]
     gameState.value.currentPlayerIndex = 0
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const setFiefdomsOrder = (houses: House[]) => {
     gameState.value.fiefdomsOrder = [...houses]
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const setKingsCourtOrder = (houses: House[]) => {
     gameState.value.kingsCourtOrder = [...houses]
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const setCurrentPlayerIndex = (index: number) => {
@@ -235,7 +315,7 @@ export const useGameState = () => {
   
   const togglePause = () => {
     gameState.value.isPaused = !gameState.value.isPaused
-    broadcastStateChange()
+    broadcastStateChange('gameState', gameState.value)
   }
   
   const getCurrentPlayer = (): House | null => {
@@ -253,7 +333,7 @@ export const useGameState = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY)
     }
-    broadcastStateChange()
+    broadcastStateChange('reset', null)
   }
   
   const exportGameState = (): string => {
@@ -371,10 +451,14 @@ export const useGameState = () => {
     loadGameState()
     const cleanup = listenForStateChanges()
     
+    // Connect to WebSocket for real-time sync
+    connect()
+    
     // Cleanup when component unmounts (if available)
     if (typeof onBeforeUnmount === 'function') {
       onBeforeUnmount(() => {
         cleanup()
+        disconnect()
       })
     }
   })
@@ -403,6 +487,9 @@ export const useGameState = () => {
     saveGameState,
     updateSettings,
     getNextAction,
-    continueGame
+    continueGame,
+    // WebSocket connection status
+    isConnected: readonly(isConnected),
+    connectionStatus: readonly(connectionStatus)
   }
 }

@@ -4,12 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `npm run dev` - Start development server at http://localhost:3000
+- `npm run dev` - Start development server at http://localhost:3000 (WebSocket server runs on port 3001)
 - `npm run build` - Build for production
 - `npm run generate` - Generate static site
 - `npm run preview` - Preview production build
 - `npm install` - Install dependencies
 - `npm run postinstall` - Prepare Nuxt (runs automatically after install)
+
+## Environment Variables
+
+- `NUXT_WS_PORT` - WebSocket server port (default: 3001)
 
 ## Architecture
 
@@ -55,6 +59,7 @@ assets/css/        - Global styles (tailwind.css)
 - **Iron Throne Track**: Determines turn order for Action Phase resolution (Raid → March → Consolidate)
 - **Turn Order Management**: Visual queue showing resolution order during Action sub-phases
 - **State Persistence**: LocalStorage with export/import functionality
+- **Real-time Sync**: WebSocket-based cross-device synchronization with connection status indicator
 - **Responsive Design**: Mobile-first with tablet optimization
 
 ### Faction Availability by Player Count
@@ -96,3 +101,5 @@ assets/css/        - Global styles (tailwind.css)
 - **@tanstack/vue-table** - Table components
 - **tw-animate-css** - Additional Tailwind animations
 - **tailwindcss-animate** - Built-in animation utilities
+- **ws** - WebSocket server for real-time cross-device synchronization
+- **@types/ws** - TypeScript definitions for ws
