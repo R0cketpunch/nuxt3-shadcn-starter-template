@@ -10,23 +10,8 @@ const activeConnections = new Map<string, {
   clientId: string 
 }>()
 
-// Cleanup inactive connections every 30 seconds
-setInterval(() => {
-  const now = Date.now()
-  const timeout = 60000 // 1 minute timeout
-  
-  activeConnections.forEach((conn, id) => {
-    if (now - conn.lastSeen > timeout) {
-      try {
-        conn.res.end()
-      } catch (e) {
-        // Connection already closed
-      }
-      activeConnections.delete(id)
-      console.log(`SSE connection cleaned up: ${id}`)
-    }
-  })
-}, 30000)
+// Note: On Vercel, serverless functions have limited execution time
+// So we use a simpler approach for connection management
 
 const broadcastToOthers = (message: any, excludeClientId: string) => {
   const data = JSON.stringify(message)
@@ -96,6 +81,8 @@ export default defineEventHandler(async (event) => {
     event.node.res.write(`data: ${JSON.stringify(clientIdMessage)}\n\n`)
     
     // Keep connection alive with periodic heartbeat
+    // Note: Vercel has a 10-second timeout for serverless functions
+    // So we send heartbeats more frequently and handle timeouts gracefully
     const heartbeatInterval = setInterval(() => {
       try {
         event.node.res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`)
@@ -104,13 +91,30 @@ export default defineEventHandler(async (event) => {
         clearInterval(heartbeatInterval)
         activeConnections.delete(clientId)
       }
-    }, 30000)
+    }, 5000) // Send heartbeat every 5 seconds
     
     // Handle client disconnect
     event.node.req.on('close', () => {
       console.log(`SSE client disconnected: ${clientId}`)
       clearInterval(heartbeatInterval)
       activeConnections.delete(clientId)
+    })
+    
+    // Automatically close connection after 25 seconds to avoid Vercel timeout
+    const autoCloseTimeout = setTimeout(() => {
+      console.log(`SSE connection auto-closed to avoid timeout: ${clientId}`)
+      clearInterval(heartbeatInterval)
+      activeConnections.delete(clientId)
+      try {
+        event.node.res.end()
+      } catch (error) {
+        // Connection may already be closed
+      }
+    }, 25000) // Close after 25 seconds
+    
+    // Clean up timeout if connection closes naturally
+    event.node.req.on('close', () => {
+      clearTimeout(autoCloseTimeout)
     })
     
     // Don't end the response, keep it open for streaming

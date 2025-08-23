@@ -77,11 +77,12 @@ NUXT_WS_PORT=3001
 - Full bidirectional communication with heartbeat system
 - Each client gets a unique ID for message routing
 
-### SSE Mode (Production)
+### SSE Mode (Production/Vercel)
 - Uses Server-Sent Events for server-to-client streaming
 - API endpoints handle client-to-server updates via POST requests
 - Compatible with Vercel's serverless function architecture
-- Automatic connection cleanup after 60 seconds of inactivity
+- Connections automatically close after 25 seconds to avoid Vercel timeout
+- Faster reconnection (1-second delay) to maintain real-time sync
 
 ### Common Features
 - Broadcasts game state, settings, and reset events

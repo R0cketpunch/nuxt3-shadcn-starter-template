@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "server/api/sse.ts": {
-      "maxDuration": 60
-    }
-  },
   "headers": [
     {
       "source": "/api/sse",
@@ -15,6 +10,14 @@
         {
           "key": "Connection",
           "value": "keep-alive"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Cache-Control"
         }
       ]
     }

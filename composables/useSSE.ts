@@ -34,7 +34,14 @@ export const useSSE = () => {
       eventSource.onerror = (error) => {
         console.error('SSE error:', error)
         isConnected.value = false
-        connectionStatus.value = 'error'
+        
+        // Check if the connection is in a failed state
+        if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+          connectionStatus.value = 'error'
+        } else {
+          // Connection is still trying, set as connecting
+          connectionStatus.value = 'connecting'
+        }
         
         // Close the connection
         if (eventSource) {
@@ -91,10 +98,11 @@ export const useSSE = () => {
   const scheduleReconnect = () => {
     if (reconnectTimer) return
     
+    // Shorter reconnect delay for SSE since connections close more frequently on Vercel
     reconnectTimer = setTimeout(() => {
       console.log('Attempting to reconnect SSE...')
       connect()
-    }, 3000)
+    }, 1000)
   }
 
   const messageHandlers = new Map<string, (data: any) => void>()
