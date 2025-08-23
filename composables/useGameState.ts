@@ -65,6 +65,44 @@ export const useGameState = () => {
   watch(gameState, saveGameState, { deep: true })
   watch(settings, saveGameState, { deep: true })
   
+  // Broadcast state changes to other tabs/devices via localStorage events
+  const broadcastStateChange = () => {
+    if (typeof window !== 'undefined') {
+      // Use a separate localStorage key for broadcasting
+      const broadcastData = {
+        gameState: gameState.value,
+        timestamp: Date.now()
+      }
+      localStorage.setItem('agot-gm-broadcast', JSON.stringify(broadcastData))
+      localStorage.removeItem('agot-gm-broadcast') // Trigger storage event
+    }
+  }
+  
+  // Listen for state changes from other tabs/devices
+  const listenForStateChanges = () => {
+    if (typeof window !== 'undefined') {
+      const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === STORAGE_KEY && event.newValue) {
+          try {
+            const newState = JSON.parse(event.newValue)
+            console.log('Received state update from another tab:', newState)
+            gameState.value = { ...initialGameState, ...newState }
+          } catch (error) {
+            console.warn('Failed to parse state update:', error)
+          }
+        }
+      }
+      
+      window.addEventListener('storage', handleStorageChange)
+      
+      // Return cleanup function
+      return () => {
+        window.removeEventListener('storage', handleStorageChange)
+      }
+    }
+    return () => {}
+  }
+  
   const initializeGame = (selectedHouses: House[]) => {
     const playerCount = selectedHouses.length
     
@@ -118,6 +156,7 @@ export const useGameState = () => {
       gameState.value.currentSubPhase = ACTION_SUBPHASES[0] // Raid Orders
       gameState.value.currentPlayerIndex = 0
     }
+    broadcastStateChange()
   }
   
   const nextSubPhase = () => {
@@ -152,14 +191,17 @@ export const useGameState = () => {
       } else {
         // End of action phase
         nextPhase()
+        return
       }
     }
+    broadcastStateChange()
   }
   
   const nextPlayer = () => {
     if (gameState.value.ironThroneOrder.length === 0) return
     
     gameState.value.currentPlayerIndex = (gameState.value.currentPlayerIndex + 1) % gameState.value.ironThroneOrder.length
+    broadcastStateChange()
   }
   
   const previousPlayer = () => {
@@ -168,19 +210,23 @@ export const useGameState = () => {
     gameState.value.currentPlayerIndex = gameState.value.currentPlayerIndex === 0 
       ? gameState.value.ironThroneOrder.length - 1 
       : gameState.value.currentPlayerIndex - 1
+    broadcastStateChange()
   }
   
   const setIronThroneOrder = (houses: House[]) => {
     gameState.value.ironThroneOrder = [...houses]
     gameState.value.currentPlayerIndex = 0
+    broadcastStateChange()
   }
   
   const setFiefdomsOrder = (houses: House[]) => {
     gameState.value.fiefdomsOrder = [...houses]
+    broadcastStateChange()
   }
   
   const setKingsCourtOrder = (houses: House[]) => {
     gameState.value.kingsCourtOrder = [...houses]
+    broadcastStateChange()
   }
   
   const setCurrentPlayerIndex = (index: number) => {
@@ -189,6 +235,7 @@ export const useGameState = () => {
   
   const togglePause = () => {
     gameState.value.isPaused = !gameState.value.isPaused
+    broadcastStateChange()
   }
   
   const getCurrentPlayer = (): House | null => {
@@ -206,6 +253,7 @@ export const useGameState = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY)
     }
+    broadcastStateChange()
   }
   
   const exportGameState = (): string => {
@@ -321,6 +369,14 @@ export const useGameState = () => {
   // Initialize on mount
   onMounted(() => {
     loadGameState()
+    const cleanup = listenForStateChanges()
+    
+    // Cleanup when component unmounts (if available)
+    if (typeof onBeforeUnmount === 'function') {
+      onBeforeUnmount(() => {
+        cleanup()
+      })
+    }
   })
   
   return {

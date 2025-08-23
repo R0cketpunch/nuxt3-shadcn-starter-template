@@ -31,33 +31,9 @@
             </div>
 
             <div class="flex items-center space-x-2">
-              <div class="flex flex-wrap gap-2 justify-center">
-                <Button @click="resetGame" variant="outline" size="sm">
-                  <RotateCcw class="mr-2 w-4 h-4" />
-                  Reset Game
-                </Button>
-
-                <Button @click="exportGame" variant="outline" size="sm">
-                  <Download class="mr-2 w-4 h-4" />
-                  Export State
-                </Button>
-
-                <input
-                  ref="importFileInput"
-                  type="file"
-                  accept=".json"
-                  class="hidden"
-                  @change="handleImportFile"
-                />
-                <Button
-                  @click="importFileInput?.click()"
-                  variant="outline"
-                  size="sm"
-                >
-                  <Upload class="mr-2 w-4 h-4" />
-                  Import State
-                </Button>
-              </div>
+              <Button as-child variant="outline" size="sm">
+                <NuxtLink to="/control">Control Panel</NuxtLink>
+              </Button>
               <Button as-child variant="outline" size="sm">
                 <NuxtLink to="/setup">Setup</NuxtLink>
               </Button>
@@ -69,23 +45,12 @@
         </div>
       </header>
       <!-- Main Game Dashboard -->
-      <GameController
-        :game-state="gameState"
-        :current-player="getCurrentPlayer()"
-        @advance-phase="advancePhase"
-        @advance-subphase="nextSubPhase"
-        @next-player="nextPlayer"
-        @previous-player="previousPlayer"
-        @toggle-pause="toggleEmergencyPause"
-      />
+      <GameDisplay :game-state="gameState" />
       <!-- Phase Indicator -->
       <PhaseIndicator
         :current-round="gameState.currentRound"
         :current-phase="gameState.currentPhase"
         :current-sub-phase="gameState.currentSubPhase"
-        @advance-phase="advancePhase"
-        @advance-subphase="nextSubPhase"
-        @next-player="nextPlayer"
       />
       <GameTimer
         :duration="currentPhaseDuration"
@@ -102,7 +67,7 @@
           track-title="Iron Throne"
           track-description="Determines turn order and ties"
           track-type="iron-throne"
-          :allow-reordering="gameState.currentPhase.id === 'westeros'"
+          :allow-reordering="false"
           :track-benefits="[
             'Decides ties',
             'Turn order in Action Phase',
@@ -110,7 +75,6 @@
           ]"
           :current-player-index="gameState.currentPlayerIndex"
           :show-current-player="shouldHighlightIronThrone"
-          @reorder-houses="handleIronThroneReorder"
         />
 
         <!-- Fiefdoms Track -->
@@ -119,7 +83,7 @@
           track-title="Fiefdoms"
           track-description="Provides combat bonuses"
           track-type="fiefdoms"
-          :allow-reordering="gameState.currentPhase.id === 'westeros'"
+          :allow-reordering="false"
           :track-benefits="[
             '+1 Combat Strength (1st position)',
             'Valyrian Steel Blade holder',
@@ -127,7 +91,6 @@
           ]"
           :current-player-index="gameState.currentPlayerIndex"
           :show-current-player="shouldHighlightFiefdoms"
-          @reorder-houses="handleFiefdomsReorder"
         />
 
         <!-- King's Court Track -->
@@ -136,7 +99,7 @@
           track-title="King\'s Court"
           track-description="Provides special orders"
           track-type="kings-court"
-          :allow-reordering="gameState.currentPhase.id === 'westeros'"
+          :allow-reordering="false"
           :track-benefits="[
             'Extra special orders',
             'Messenger Raven holder',
@@ -144,27 +107,18 @@
           ]"
           :current-player-index="0"
           :show-current-player="shouldHighlightKingsCourt"
-          @reorder-houses="handleKingsCourtReorder"
         />
       </div>
       <!-- Left Column: Game Controller -->
     </div>
-    
-    <!-- Game Announcement Modal -->
-    <GameAnnouncement ref="announcementModal" title="" />
   </main>
 </template>
 
 <script setup lang="ts">
-import { RotateCcw, Download, Upload } from "lucide-vue-next";
-import type { House } from "~/types/game";
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
 
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
-
-const importFileInput = ref<HTMLInputElement | null>(null);
-const announcementModal = ref<{ show: (title: string, subtitle?: string) => void } | null>(null);
 
 const hasGameStarted = computed(() => {
   return gameState.value.ironThroneOrder.length > 0;
@@ -173,60 +127,6 @@ const hasGameStarted = computed(() => {
 const currentPhaseDuration = computed(() => {
   return gameStateManager.getPhaseDuration(gameState.value.currentPhase.id);
 });
-
-const toggleEmergencyPause = () => {
-  gameStateManager.togglePause();
-};
-
-const advancePhase = () => {
-  const previousRound = gameState.value.currentRound;
-  gameStateManager.nextPhase();
-  
-  // Show announcement only for round changes
-  const currentRound = gameState.value.currentRound;
-  
-  if (currentRound > previousRound) {
-    // Round changed - show announcement
-    announcementModal.value?.show(`Round ${currentRound}`);
-  }
-};
-
-const nextSubPhase = () => {
-  const previousRound = gameState.value.currentRound;
-  gameStateManager.nextSubPhase();
-  
-  // Show announcement only for round changes
-  const currentRound = gameState.value.currentRound;
-  
-  if (currentRound > previousRound) {
-    // Round changed - show announcement
-    announcementModal.value?.show(`Round ${currentRound}`);
-  }
-};
-
-const nextPlayer = () => {
-  gameStateManager.nextPlayer();
-};
-
-const previousPlayer = () => {
-  gameStateManager.previousPlayer();
-};
-
-const getCurrentPlayer = () => {
-  return gameStateManager.getCurrentPlayer();
-};
-
-const handleIronThroneReorder = (reorderedHouses: House[]) => {
-  gameStateManager.setIronThroneOrder(reorderedHouses);
-};
-
-const handleFiefdomsReorder = (reorderedHouses: House[]) => {
-  gameStateManager.setFiefdomsOrder(reorderedHouses);
-};
-
-const handleKingsCourtReorder = (reorderedHouses: House[]) => {
-  gameStateManager.setKingsCourtOrder(reorderedHouses);
-};
 
 const currentPhase = computed(() => {
   return gameState.value.currentPhase.name;
@@ -254,46 +154,6 @@ const shouldHighlightKingsCourt = computed(() => {
   // King's Court track is used during "Use Messenger Raven" sub-phase
   return currentSubPhase?.id === "messenger-raven";
 });
-
-const resetGame = () => {
-  if (
-    confirm(
-      "Are you sure you want to reset the game? This will clear all progress."
-    )
-  ) {
-    gameStateManager.resetGame();
-  }
-};
-
-const exportGame = () => {
-  const jsonString = gameStateManager.exportGameState();
-  const blob = new Blob([jsonString], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `agot-game-state-${new Date().toISOString().split("T")[0]}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-
-const handleImportFile = (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const jsonString = e.target?.result as string;
-    const success = gameStateManager.importGameState(jsonString);
-    if (success) {
-      alert("Game state imported successfully!");
-    } else {
-      alert("Failed to import game state. Please check the file format.");
-    }
-  };
-  reader.readAsText(file);
-};
 
 // Load game state on mount
 onMounted(() => {

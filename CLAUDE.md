@@ -89,3 +89,10 @@ assets/css/        - Global styles (tailwind.css)
 - TypeScript enabled throughout with strict configuration
 - Component registration handled by shadcn-nuxt module
 - Player names default to "Player X" if not provided during setup
+
+### Additional Dependencies
+- **@formkit/auto-animate** - Animation utilities
+- **@number-flow/vue** - Number animation components
+- **@tanstack/vue-table** - Table components
+- **tw-animate-css** - Additional Tailwind animations
+- **tailwindcss-animate** - Built-in animation utilities
