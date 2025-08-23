@@ -149,6 +149,9 @@
       </div>
       <!-- Left Column: Game Controller -->
     </div>
+    
+    <!-- Game Announcement Modal -->
+    <GameAnnouncement ref="announcementModal" title="" />
   </main>
 </template>
 
@@ -161,6 +164,7 @@ const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
 
 const importFileInput = ref<HTMLInputElement | null>(null);
+const announcementModal = ref<{ show: (title: string, subtitle?: string) => void } | null>(null);
 
 const hasGameStarted = computed(() => {
   return gameState.value.ironThroneOrder.length > 0;
@@ -175,11 +179,29 @@ const toggleEmergencyPause = () => {
 };
 
 const advancePhase = () => {
+  const previousRound = gameState.value.currentRound;
   gameStateManager.nextPhase();
+  
+  // Show announcement only for round changes
+  const currentRound = gameState.value.currentRound;
+  
+  if (currentRound > previousRound) {
+    // Round changed - show announcement
+    announcementModal.value?.show(`Round ${currentRound}`);
+  }
 };
 
 const nextSubPhase = () => {
+  const previousRound = gameState.value.currentRound;
   gameStateManager.nextSubPhase();
+  
+  // Show announcement only for round changes
+  const currentRound = gameState.value.currentRound;
+  
+  if (currentRound > previousRound) {
+    // Round changed - show announcement
+    announcementModal.value?.show(`Round ${currentRound}`);
+  }
 };
 
 const nextPlayer = () => {
