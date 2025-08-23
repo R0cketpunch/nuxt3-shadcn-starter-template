@@ -3,7 +3,6 @@
   <main v-auto-animate class="h-screen max-h-screen">
     <div v-if="!hasGameStarted">
       <div class="space-y-4">
-        as
         <h2 class="text-xl font-semibold">No Game in Progress</h2>
         <p class="text-muted-foreground">
           Start a new game to begin managing turns and timers.
