@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-full bg-background" v-auto-animate>
+  <div class="flex flex-col bg-background" v-auto-animate>
     <!-- Track Title -->
     <!-- <div class="p-4 text-center border-b">
       <div class="flex gap-2 justify-center items-center">
@@ -31,7 +31,7 @@
       >
         <!-- Position Number -->
         <div
-          class="grid place-items-center h-full text-6xl text-white aspect-square"
+          class="grid place-items-center h-full text-6xl font-bold text-white aspect-square"
           :style="{
             backgroundColor: house.color + '20',
             color: house.color,
@@ -46,22 +46,22 @@
           </div>
 
           <NumberFlow v-else :value="index + 1" />
-          <div
-            v-if="trackType === 'kings-court' && index <= 3"
-            class="flex absolute bottom-10 gap-1"
-          >
-            <Star
-              v-for="star in getStarCount(index)"
-              :key="`star-${index}-${star}`"
-              class="fill-current size-3"
-            />
-          </div>
         </div>
 
         <!-- House Info -->
         <div class="p-10">
-          <div class="text-4xl font-bold">
+          <div class="flex gap-8 items-center text-4xl font-bold">
             {{ house.playerName || `Player ${getPlayerNumber(house.id)}` }}
+            <div
+              v-if="trackType === 'kings-court' && index <= 3"
+              class="flex bottom-10 gap-1"
+            >
+              <Star
+                v-for="star in getStarCount(index)"
+                :key="`star-${index}-${star}`"
+                class="text-amber-500 fill-current size-3"
+              />
+            </div>
           </div>
           <div class="font-medium text-muted-foreground">
             House {{ house.name }}

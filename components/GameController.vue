@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-3">
-    <div class="col-span-2 p-10 space-y-2">
+    <div class="col-span-2 p-10">
       <div class="text-sm text-muted-foreground">Round</div>
       <div class="text-6xl">
         <NumberFlow :value="gameState.currentRound" />

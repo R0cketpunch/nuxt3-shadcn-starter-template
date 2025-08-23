@@ -21,8 +21,38 @@
     <!-- Setup Form -->
     <main class="container px-4 py-8 mx-auto max-w-4xl" v-auto-animate>
       <div class="space-y-8">
-        <!-- Player Count Selection -->
-        <div class="space-y-4">
+        <!-- Progress Indicator -->
+        <div class="flex items-center justify-center space-x-4 mb-8">
+          <div class="flex items-center space-x-2">
+            <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold', 
+                         setupStep === 'player-count' ? 'bg-blue-500 text-white' : 
+                         ['player-names', 'house-assignment', 'final-setup'].includes(setupStep) ? 'bg-green-500 text-white' : 'bg-gray-300']">1</div>
+            <span :class="setupStep === 'player-count' ? 'font-semibold' : ''">Players</span>
+          </div>
+          <div class="w-8 h-px bg-gray-300"></div>
+          <div class="flex items-center space-x-2">
+            <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold', 
+                         setupStep === 'player-names' ? 'bg-blue-500 text-white' : 
+                         ['house-assignment', 'final-setup'].includes(setupStep) ? 'bg-green-500 text-white' : 'bg-gray-300']">2</div>
+            <span :class="setupStep === 'player-names' ? 'font-semibold' : ''">Names</span>
+          </div>
+          <div class="w-8 h-px bg-gray-300"></div>
+          <div class="flex items-center space-x-2">
+            <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold', 
+                         setupStep === 'house-assignment' ? 'bg-blue-500 text-white' : 
+                         setupStep === 'final-setup' ? 'bg-green-500 text-white' : 'bg-gray-300']">3</div>
+            <span :class="setupStep === 'house-assignment' ? 'font-semibold' : ''">Houses</span>
+          </div>
+          <div class="w-8 h-px bg-gray-300"></div>
+          <div class="flex items-center space-x-2">
+            <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold', 
+                         setupStep === 'final-setup' ? 'bg-blue-500 text-white' : 'bg-gray-300']">4</div>
+            <span :class="setupStep === 'final-setup' ? 'font-semibold' : ''">Setup</span>
+          </div>
+        </div>
+
+        <!-- Step 1: Player Count Selection -->
+        <div v-if="setupStep === 'player-count'" class="space-y-4">
           <h2 class="text-xl font-semibold">Number of Players</h2>
           <div class="flex space-x-2">
             <Button
@@ -35,109 +65,190 @@
               {{ count }} Players
             </Button>
           </div>
+          
+          <!-- Navigation -->
+          <div class="flex justify-end pt-6">
+            <Button
+              @click="setupStep = 'player-names'"
+              :disabled="selectedPlayerCount === 0"
+              size="lg"
+            >
+              Next: Enter Names →
+            </Button>
+          </div>
         </div>
 
-        <!-- House Selection -->
-        <div v-if="selectedPlayerCount" class="space-y-4">
-          <h2 class="text-xl font-semibold">
-            Select Houses & Players ({{ selectedHouses.length }}/{{
-              selectedPlayerCount
-            }})
-          </h2>
-          <div class="space-y-2">
-            <p class="text-sm text-muted-foreground">
-              Choose {{ selectedPlayerCount }} houses and assign player names.
-            </p>
-            <div
-              class="p-3 text-sm bg-blue-50 rounded-lg border border-blue-200"
+        <!-- Step 2: Player Names -->
+        <div v-if="setupStep === 'player-names'" class="space-y-4">
+          <h2 class="text-xl font-semibold">Enter Player Names</h2>
+          <p class="text-sm text-muted-foreground">
+            Enter the names of all {{ selectedPlayerCount }} players. You can customize these or use the defaults.
+          </p>
+          
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div 
+              v-for="(name, index) in playerNames" 
+              :key="index"
+              class="space-y-2"
             >
-              <div class="mb-1 font-semibold text-blue-800">
-                Available Factions for {{ selectedPlayerCount }} Players:
-              </div>
-              <div class="text-blue-700">
-                {{ availableHouses.map((h) => h.name).join(", ") }}
-                <span
-                  v-if="selectedPlayerCount < 6"
-                  class="italic text-blue-600"
-                >
-                  ({{ 6 - selectedPlayerCount }} faction{{
-                    6 - selectedPlayerCount > 1 ? "s" : ""
-                  }}
-                  excluded for balance)
-                </span>
-              </div>
+              <label class="text-sm font-medium">Player {{ index + 1 }}</label>
+              <input
+                v-model="playerNames[index]"
+                type="text"
+                :placeholder="`Player ${index + 1}`"
+                class="px-3 py-2 w-full rounded-md border bg-background"
+              />
             </div>
           </div>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2" v-auto-animate>
-            <div
-              v-for="house in availableHouses"
-              :key="house.id"
-              class="p-4 rounded-lg border-2 transition-all"
-              :class="[
-                isHouseSelected(house.id) ? `border-2` : 'border-gray-300',
-                selectedHouses.length >= selectedPlayerCount &&
-                !isHouseSelected(house.id)
-                  ? 'opacity-50'
-                  : '',
-              ]"
-              :style="
-                isHouseSelected(house.id)
-                  ? {
-                      backgroundColor: house.color + '15',
-                      borderColor: house.color,
-                    }
-                  : {}
-              "
+          
+          <!-- Navigation -->
+          <div class="flex justify-between pt-6">
+            <Button @click="goBack" variant="outline" size="lg">
+              ← Back
+            </Button>
+            <Button
+              @click="proceedToHouseAssignment"
+              :disabled="!canProceedToHouseAssignment"
+              size="lg"
             >
-              <div class="space-y-3">
-                <!-- House Header -->
-                <div class="flex justify-between items-center">
-                  <div class="flex items-center space-x-3">
-                    <div
-                      class="text-lg font-bold"
-                      :style="{ color: house.color }"
-                    >
-                      {{ house.name }}
+              Next: Choose Houses →
+            </Button>
+          </div>
+        </div>
+
+        <!-- Step 3: House Assignment Method -->
+        <div v-if="setupStep === 'house-assignment'" class="space-y-6">
+          <div class="space-y-4">
+            <h2 class="text-xl font-semibold">House Assignment</h2>
+            <p class="text-sm text-muted-foreground">
+              Choose how to assign houses to players.
+            </p>
+            
+            <!-- Assignment Method Selection -->
+            <div class="flex space-x-4">
+              <Button
+                @click="assignmentMethod = 'random'"
+                :variant="assignmentMethod === 'random' ? 'default' : 'outline'"
+                class="px-6"
+              >
+                🎲 Random Assignment
+              </Button>
+              <Button
+                @click="assignmentMethod = 'manual'"
+                :variant="assignmentMethod === 'manual' ? 'default' : 'outline'"
+                class="px-6"
+              >
+                🎯 Manual Selection
+              </Button>
+            </div>
+
+            <!-- Preview for Random Assignment -->
+            <div v-if="assignmentMethod === 'random'" class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div class="mb-2 font-semibold text-blue-800">Random Assignment</div>
+              <div class="text-sm text-blue-700">
+                Houses will be randomly assigned to players. Available houses for {{ selectedPlayerCount }} players:
+                <strong>{{ availableHouses.map(h => h.name).join(', ') }}</strong>
+              </div>
+            </div>
+
+            <!-- Manual Selection Interface -->
+            <div v-if="assignmentMethod === 'manual'" class="space-y-4">
+              <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                <div class="mb-2 font-semibold text-green-800">Manual Selection</div>
+                <div class="text-sm text-green-700">
+                  Choose which house each player will control.
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div
+                  v-for="house in availableHouses"
+                  :key="house.id"
+                  class="p-4 rounded-lg border-2 transition-all"
+                  :class="[
+                    isHouseSelected(house.id) ? `border-2` : 'border-gray-300',
+                    selectedHouses.length >= selectedPlayerCount &&
+                    !isHouseSelected(house.id)
+                      ? 'opacity-50'
+                      : '',
+                  ]"
+                  :style="
+                    isHouseSelected(house.id)
+                      ? {
+                          backgroundColor: house.color + '15',
+                          borderColor: house.color,
+                        }
+                      : {}
+                  "
+                >
+                  <div class="space-y-3">
+                    <!-- House Header -->
+                    <div class="flex justify-between items-center">
+                      <div class="flex items-center space-x-3">
+                        <div
+                          class="text-lg font-bold"
+                          :style="{ color: house.color }"
+                        >
+                          {{ house.name }}
+                        </div>
+                        <div v-if="isHouseSelected(house.id)">
+                          <CheckCircle
+                            class="w-5 h-5"
+                            :style="{ color: house.color }"
+                          />
+                        </div>
+                      </div>
+
+                      <Button
+                        @click="toggleHouseSelection(house)"
+                        :variant="
+                          isHouseSelected(house.id) ? 'destructive' : 'default'
+                        "
+                        size="sm"
+                        :disabled="
+                          selectedHouses.length >= selectedPlayerCount &&
+                          !isHouseSelected(house.id)
+                        "
+                      >
+                        {{ isHouseSelected(house.id) ? "Remove" : "Add" }}
+                      </Button>
                     </div>
-                    <div v-if="isHouseSelected(house.id)">
-                      <CheckCircle
-                        class="w-5 h-5"
-                        :style="{ color: house.color }"
-                      />
+
+                    <!-- Player Assignment (only if house is selected) -->
+                    <div v-if="isHouseSelected(house.id)" class="space-y-2">
+                      <label class="text-sm font-medium">Assigned Player</label>
+                      <select
+                        v-model="getSelectedHouse(house.id)!.playerName"
+                        class="px-3 py-2 w-full rounded-md border bg-background"
+                      >
+                        <option v-for="name in playerNames" :key="name" :value="name">
+                          {{ name }}
+                        </option>
+                      </select>
                     </div>
                   </div>
-
-                  <Button
-                    @click="toggleHouseSelection(house)"
-                    :variant="
-                      isHouseSelected(house.id) ? 'destructive' : 'default'
-                    "
-                    size="sm"
-                    :disabled="
-                      selectedHouses.length >= selectedPlayerCount &&
-                      !isHouseSelected(house.id)
-                    "
-                  >
-                    {{ isHouseSelected(house.id) ? "Remove" : "Add" }}
-                  </Button>
-                </div>
-
-                <!-- Player Name Input (only if house is selected) -->
-                <div v-if="isHouseSelected(house.id)" class="space-y-2">
-                  <label class="text-sm font-medium">Player Name</label>
-                  <input
-                    v-model="getSelectedHouse(house.id)!.playerName"
-                    type="text"
-                    :placeholder="`Player ${getPlayerNumber(house.id)}`"
-                    class="px-3 py-2 w-full rounded-md border bg-background"
-                    @input="updatePlayerName(house.id, $event)"
-                  />
                 </div>
               </div>
             </div>
           </div>
+          
+          <!-- Navigation -->
+          <div class="flex justify-between pt-6">
+            <Button @click="goBack" variant="outline" size="lg">
+              ← Back
+            </Button>
+            <Button
+              @click="proceedToFinalSetup"
+              :disabled="!canProceedToFinalSetup"
+              size="lg"
+            >
+              Next: Final Setup →
+            </Button>
+          </div>
         </div>
+
+        <!-- Step 4: Final Setup -->
+        <div v-if="setupStep === 'final-setup'" class="space-y-6">
 
         <!-- Starting Iron Throne Order Preview -->
         <div
@@ -247,8 +358,11 @@
           </div>
         </div>
 
-        <!-- Start Game Button -->
-        <div class="flex justify-center pt-8">
+        <!-- Navigation -->
+        <div class="flex justify-between pt-6">
+          <Button @click="goBack" variant="outline" size="lg">
+            ← Back
+          </Button>
           <Button
             @click="startGame"
             size="lg"
@@ -259,8 +373,9 @@
             Start Game
           </Button>
         </div>
+      </div>
 
-        <!-- Error Messages -->
+      <!-- Error Messages -->
         <div v-if="errorMessage" class="text-center">
           <div
             class="p-4 text-red-600 bg-red-50 rounded-lg border border-red-200"
@@ -292,6 +407,11 @@ const selectedPlayerCount = ref<number>(0);
 const selectedHouses = ref<House[]>([]);
 const customDurations = ref<Record<string, number>>({});
 const errorMessage = ref("");
+
+// New state for the multi-step setup
+const setupStep = ref<'player-count' | 'player-names' | 'house-assignment' | 'final-setup'>('player-count');
+const playerNames = ref<string[]>([]);
+const assignmentMethod = ref<'random' | 'manual'>('manual');
 
 // Initialize custom durations object with all phase IDs for proper reactivity
 const initializeCustomDurations = () => {
@@ -330,6 +450,19 @@ const gamePhases = GAME_PHASES;
 
 const canStartGame = computed(() => {
   return selectedHouses.value.length === selectedPlayerCount.value;
+});
+
+const canProceedToHouseAssignment = computed(() => {
+  return playerNames.value.length === selectedPlayerCount.value && 
+         playerNames.value.every(name => name.trim().length > 0);
+});
+
+const canProceedToFinalSetup = computed(() => {
+  if (assignmentMethod.value === 'random') {
+    return true; // Can always proceed with random assignment
+  } else {
+    return selectedHouses.value.length === selectedPlayerCount.value;
+  }
 });
 
 const isHouseSelected = (houseId: string) => {
@@ -379,6 +512,48 @@ const formatDuration = (seconds: number) => {
   return `${minutes}m`;
 };
 
+const proceedToHouseAssignment = () => {
+  if (!canProceedToHouseAssignment.value) {
+    errorMessage.value = "Please enter names for all players.";
+    return;
+  }
+  setupStep.value = 'house-assignment';
+  errorMessage.value = "";
+};
+
+const proceedToFinalSetup = () => {
+  if (assignmentMethod.value === 'random') {
+    assignHousesRandomly();
+  }
+  setupStep.value = 'final-setup';
+  errorMessage.value = "";
+};
+
+const assignHousesRandomly = () => {
+  const available = [...availableHouses.value];
+  const shuffled = available.sort(() => Math.random() - 0.5);
+  
+  selectedHouses.value = shuffled.slice(0, selectedPlayerCount.value).map((house, index) => ({
+    ...house,
+    playerName: playerNames.value[index]
+  }));
+};
+
+const goBack = () => {
+  switch (setupStep.value) {
+    case 'player-names':
+      setupStep.value = 'player-count';
+      break;
+    case 'house-assignment':
+      setupStep.value = 'player-names';
+      break;
+    case 'final-setup':
+      setupStep.value = 'house-assignment';
+      break;
+  }
+  errorMessage.value = "";
+};
+
 const startGame = () => {
   errorMessage.value = "";
 
@@ -417,7 +592,16 @@ const startGame = () => {
 // Reset form when player count changes
 watch(selectedPlayerCount, () => {
   selectedHouses.value = [];
+  playerNames.value = [];
   errorMessage.value = "";
+  setupStep.value = 'player-names';
+});
+
+// Initialize player names array when needed
+watch([selectedPlayerCount, setupStep], ([count, step]) => {
+  if (step === 'player-names' && count > 0) {
+    playerNames.value = Array(count).fill('').map((_, i) => `Player ${i + 1}`);
+  }
 });
 
 // Initialize custom durations on mount

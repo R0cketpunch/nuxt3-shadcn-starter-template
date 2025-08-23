@@ -1,6 +1,6 @@
 <template>
   <!-- Main Dashboard -->
-  <main v-auto-animate>
+  <main v-auto-animate class="h-screen max-h-screen">
     <div v-if="!hasGameStarted">
       <div class="space-y-4">
         as

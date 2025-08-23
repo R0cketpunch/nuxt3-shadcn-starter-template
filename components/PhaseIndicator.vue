@@ -3,7 +3,7 @@
     <div
       v-for="(phase, index) in allPhases"
       :key="phase.id"
-      class="flex flex-col justify-between p-8 aspect-[16/6]"
+      class="flex flex-col justify-between p-8"
       :class="{
         'bg-muted text-white': isCurrentPhase(index),
         'bg-background text-border line-through': isPhaseComplete(index),
@@ -19,7 +19,7 @@
     <div
       v-for="(subPhase, index) in currentPhaseSubPhases"
       :key="`sub-${subPhase.id}`"
-      class="flex flex-col justify-between p-8 aspect-[16/6]"
+      class="flex flex-col justify-between p-8"
       :class="{
         'bg-muted text-white': isCurrentSubPhase(subPhase),
         'bg-background text-border line-through': isSubPhaseComplete(index),

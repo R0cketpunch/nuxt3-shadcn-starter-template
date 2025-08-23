@@ -141,12 +141,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --color-house-stark: oklch(0.646 0.222 41.116);
-  --color-house-lannister: oklch(0.6 0.118 184.704);
-  --color-house-baratheon: oklch(0.398 0.07 227.392);
-  --color-house-greyjoy: oklch(0.828 0.189 84.429);
-  --color-house-tyrell: oklch(0.769 0.188 70.08);
-  --color-house-martell: oklch(0.627 0.265 303.9);
+  --color-stark: #454f54;
+  --color-lannister: #dc2626;
+  --color-baratheon: #fbbf24;
+  --color-greyjoy: #1f2937;
+  --color-tyrell: #10b981;
+  --color-martell: #f97316;
   --color-secondary: oklch(0.97 0 0);
   --color-secondary-foreground: oklch(0.205 0 0);
 }
