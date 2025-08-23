@@ -7,8 +7,7 @@
         <p class="text-muted-foreground">
           Start a new game to begin managing turns and timers.
         </p>
-        
-        
+
         <Button as-child size="lg">
           <NuxtLink to="/setup">Start New Game</NuxtLink>
         </Button>
@@ -21,7 +20,7 @@
       class="flex flex-col min-h-screen divide-x divide-y"
     >
       <!-- Header -->
-      <header class="bg-card">
+      <!-- <header class="bg-card">
         <div class="px-4 py-4 mx-auto">
           <div class="flex justify-between items-center">
             <div>
@@ -47,7 +46,7 @@
             </div>
           </div>
         </div>
-      </header>
+      </header> -->
       <!-- Main Game Dashboard -->
       <GameDisplay :game-state="gameState" />
       <!-- Phase Indicator -->
@@ -127,7 +126,9 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
 
-const announcementModal = ref<{ show: (title: string, subtitle?: string) => void } | null>(null);
+const announcementModal = ref<{
+  show: (title: string, subtitle?: string) => void;
+} | null>(null);
 const realtimeSync = useRealtimeSync();
 
 const hasGameStarted = computed(() => {
@@ -136,13 +137,16 @@ const hasGameStarted = computed(() => {
 
 // Watch for round changes to trigger announcements
 let previousRound = gameState.value.currentRound;
-watch(() => gameState.value.currentRound, (newRound) => {
-  if (newRound > previousRound && newRound > 1) {
-    // Show announcement for new rounds (skip round 1 since that's the start)
-    announcementModal.value?.show(`Round ${newRound}`);
+watch(
+  () => gameState.value.currentRound,
+  (newRound) => {
+    if (newRound > previousRound && newRound > 1) {
+      // Show announcement for new rounds (skip round 1 since that's the start)
+      announcementModal.value?.show(`Round ${newRound}`);
+    }
+    previousRound = newRound;
   }
-  previousRound = newRound;
-});
+);
 
 const currentPhaseDuration = computed(() => {
   return gameStateManager.getPhaseDuration(gameState.value.currentPhase.id);
