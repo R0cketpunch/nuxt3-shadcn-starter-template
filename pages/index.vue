@@ -1,6 +1,7 @@
 <template>
   <!-- Main Dashboard -->
   <main v-auto-animate class="h-screen max-h-screen">
+    Game
     <div v-if="!hasGameStarted">
       <div class="space-y-4">
         <h2 class="text-xl font-semibold">No Game in Progress</h2>
