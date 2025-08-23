@@ -178,44 +178,51 @@
         <div v-if="gameState.currentPhase.id === 'westeros'" class="space-y-4">
           <h2 class="text-xl font-semibold">Influence Track Management</h2>
 
-          <div class="grid gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reorder Influence Tracks</CardTitle>
-                <CardDescription>
-                  Drag and drop houses to reorder the influence tracks during
-                  Westeros phase
-                </CardDescription>
-              </CardHeader>
-              <CardContent class="space-y-6">
-                <!-- Iron Throne Track Control -->
-                <div>
-                  <h3 class="mb-2 font-medium">Iron Throne Track</h3>
-                  <InfluenceTrackControl
-                    :houses="[...gameState.ironThroneOrder]"
-                    @reorder="handleIronThroneReorder"
-                  />
-                </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Iron Throne Track Control -->
+            <div class="bg-card border rounded-lg overflow-hidden">
+              <div class="p-3 border-b bg-muted">
+                <h3 class="font-medium text-center">Iron Throne Track</h3>
+              </div>
+              <InfluenceTrack
+                :houses="[...gameState.ironThroneOrder]"
+                track-title="Iron Throne"
+                track-description="Turn order and tiebreakers"
+                track-type="iron-throne"
+                :allow-reordering="true"
+                @reorder-houses="handleIronThroneReorder"
+              />
+            </div>
 
-                <!-- Fiefdoms Track Control -->
-                <div>
-                  <h3 class="mb-2 font-medium">Fiefdoms Track</h3>
-                  <InfluenceTrackControl
-                    :houses="[...gameState.fiefdomsOrder]"
-                    @reorder="handleFiefdomsReorder"
-                  />
-                </div>
+            <!-- Fiefdoms Track Control -->
+            <div class="bg-card border rounded-lg overflow-hidden">
+              <div class="p-3 border-b bg-muted">
+                <h3 class="font-medium text-center">Fiefdoms Track</h3>
+              </div>
+              <InfluenceTrack
+                :houses="[...gameState.fiefdomsOrder]"
+                track-title="Fiefdoms"
+                track-description="Combat strength bonuses"
+                track-type="fiefdoms"
+                :allow-reordering="true"
+                @reorder-houses="handleFiefdomsReorder"
+              />
+            </div>
 
-                <!-- King's Court Track Control -->
-                <div>
-                  <h3 class="mb-2 font-medium">King's Court Track</h3>
-                  <InfluenceTrackControl
-                    :houses="[...gameState.kingsCourtOrder]"
-                    @reorder="handleKingsCourtReorder"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <!-- King's Court Track Control -->
+            <div class="bg-card border rounded-lg overflow-hidden">
+              <div class="p-3 border-b bg-muted">
+                <h3 class="font-medium text-center">King's Court Track</h3>
+              </div>
+              <InfluenceTrack
+                :houses="[...gameState.kingsCourtOrder]"
+                track-title="King's Court"
+                track-description="Special order tokens"
+                track-type="kings-court"
+                :allow-reordering="true"
+                @reorder-houses="handleKingsCourtReorder"
+              />
+            </div>
           </div>
         </div>
       </div>
