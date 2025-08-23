@@ -1,56 +1,45 @@
-// Simple HTTP-based state synchronization
-let gameState: any = null
-let settings: any = null
-let lastUpdateTime = Date.now()
-
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
   
-  if (method === 'GET') {
-    // Client requesting current state
-    const clientLastUpdate = getQuery(event).lastUpdate as string
-    const clientTime = clientLastUpdate ? parseInt(clientLastUpdate) : 0
-    
-    if (lastUpdateTime > clientTime) {
-      return {
-        gameState,
-        settings,
-        lastUpdate: lastUpdateTime
-      }
-    } else {
-      return {
-        noChanges: true,
-        lastUpdate: lastUpdateTime
-      }
-    }
-  }
-  
   if (method === 'POST') {
-    // Client updating state
+    // Client updating state - broadcast via Pusher
     const body = await readBody(event)
+    const pusher = getPusher()
     
-    if (body.gameState !== undefined) {
-      gameState = body.gameState
-      lastUpdateTime = Date.now()
-      console.log('Game state updated via sync API')
-    }
-    
-    if (body.settings !== undefined) {
-      settings = body.settings
-      lastUpdateTime = Date.now()
-      console.log('Settings updated via sync API')
-    }
-    
-    if (body.reset) {
-      gameState = null
-      settings = null
-      lastUpdateTime = Date.now()
-      console.log('Game reset via sync API')
-    }
-    
-    return {
-      success: true,
-      lastUpdate: lastUpdateTime
+    try {
+      if (body.gameState !== undefined) {
+        await pusher.trigger('game-channel', 'game-state-update', {
+          gameState: body.gameState,
+          timestamp: Date.now()
+        })
+        console.log('Game state broadcasted via Pusher')
+      }
+      
+      if (body.settings !== undefined) {
+        await pusher.trigger('game-channel', 'settings-update', {
+          settings: body.settings,
+          timestamp: Date.now()
+        })
+        console.log('Settings broadcasted via Pusher')
+      }
+      
+      if (body.reset) {
+        await pusher.trigger('game-channel', 'game-reset', {
+          timestamp: Date.now()
+        })
+        console.log('Game reset broadcasted via Pusher')
+      }
+      
+      return {
+        success: true,
+        timestamp: Date.now()
+      }
+    } catch (error) {
+      console.error('Pusher broadcast error:', error)
+      return { 
+        error: 'Failed to broadcast state change',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
     }
   }
   

@@ -1,6 +1,11 @@
 <template>
-    <nav class="text-center py-4 border dark:border-gray-500 flex items-center justify-center">
-        The Navbar
+    <nav class="text-center py-4 border dark:border-gray-500 flex items-center justify-between px-4">
+        <div class="flex items-center space-x-4">
+            <span class="font-medium">A Game of Thrones GM</span>
+            <client-only>
+                <ConnectionStatus :status="connectionStatus" />
+            </client-only>
+        </div>
 
         <client-only>
             <button class="flex px-2 py-1 rounded-md" @click="toggleDark()">
@@ -18,6 +23,8 @@
 <script setup>
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
+
+const { connectionStatus } = useGameState();
 </script>
 
 <style lang="postcss" scoped>

@@ -4,6 +4,16 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-11',
   devtools: { enabled: true },
+  runtimeConfig: {
+    // Private keys (only available on server-side)
+    pusherAppId: process.env.PUSHER_APP_ID,
+    pusherSecret: process.env.PUSHER_SECRET,
+    // Public keys (exposed to client-side)
+    public: {
+      pusherKey: process.env.PUSHER_KEY,
+      pusherCluster: process.env.PUSHER_CLUSTER,
+    }
+  },
   vite: {
     plugins: [
       tailwindcss(),

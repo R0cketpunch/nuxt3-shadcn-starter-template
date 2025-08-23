@@ -5,6 +5,7 @@ const STORAGE_KEY = 'agot-gm-game-state'
 const SETTINGS_KEY = 'agot-gm-settings'
 
 export const useGameState = () => {
+  const realtimeSync = useRealtimeSync()
   const initialGameState: GameState = {
     currentRound: 1,
     currentPhase: GAME_PHASES[0], // Westeros phase
@@ -65,39 +66,43 @@ export const useGameState = () => {
   watch(gameState, saveGameState, { deep: true })
   watch(settings, saveGameState, { deep: true })
   
-  // Broadcast state changes to other tabs/devices via localStorage events
+  // Broadcast state changes to other devices via Pusher
   const broadcastStateChange = () => {
     if (typeof window !== 'undefined') {
-      // Use a separate localStorage key for broadcasting
-      const broadcastData = {
-        gameState: gameState.value,
-        timestamp: Date.now()
-      }
-      localStorage.setItem('agot-gm-broadcast', JSON.stringify(broadcastData))
-      localStorage.removeItem('agot-gm-broadcast') // Trigger storage event
+      realtimeSync.broadcastGameState(gameState.value)
     }
   }
   
-  // Listen for state changes from other tabs/devices
+  // Listen for state changes from other devices via Pusher
   const listenForStateChanges = () => {
     if (typeof window !== 'undefined') {
-      const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === STORAGE_KEY && event.newValue) {
-          try {
-            const newState = JSON.parse(event.newValue)
-            console.log('Received state update from another tab:', newState)
-            gameState.value = { ...initialGameState, ...newState }
-          } catch (error) {
-            console.warn('Failed to parse state update:', error)
-          }
-        }
-      }
+      // Connect to Pusher
+      realtimeSync.connect()
       
-      window.addEventListener('storage', handleStorageChange)
+      // Listen for game state updates from other devices
+      realtimeSync.onGameStateUpdate(({ gameState: newState, timestamp }) => {
+        console.log('Received game state update from another device:', newState)
+        gameState.value = { ...initialGameState, ...newState }
+      })
+      
+      // Listen for settings updates from other devices
+      realtimeSync.onSettingsUpdate(({ settings: newSettings, timestamp }) => {
+        console.log('Received settings update from another device:', newSettings)
+        settings.value = { ...initialSettings, ...newSettings }
+      })
+      
+      // Listen for game reset from other devices
+      realtimeSync.onGameReset(({ timestamp }) => {
+        console.log('Received game reset from another device')
+        gameState.value = { ...initialGameState }
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(STORAGE_KEY)
+        }
+      })
       
       // Return cleanup function
       return () => {
-        window.removeEventListener('storage', handleStorageChange)
+        realtimeSync.disconnect()
       }
     }
     return () => {}
@@ -253,7 +258,7 @@ export const useGameState = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY)
     }
-    broadcastStateChange()
+    realtimeSync.broadcastReset()
   }
   
   const exportGameState = (): string => {
@@ -296,6 +301,7 @@ export const useGameState = () => {
 
   const updateSettings = (newSettings: GameSettings) => {
     settings.value = { ...newSettings }
+    realtimeSync.broadcastSettings(newSettings)
   }
 
   const getNextAction = (): { action: 'nextPlayer' | 'nextSubPhase' | 'nextPhase' | 'complete'; label: string } => {
@@ -382,6 +388,8 @@ export const useGameState = () => {
   return {
     gameState: readonly(gameState),
     settings: readonly(settings),
+    connectionStatus: realtimeSync.connectionStatus,
+    isConnected: realtimeSync.isConnected,
     initializeGame,
     nextPhase,
     nextSubPhase,

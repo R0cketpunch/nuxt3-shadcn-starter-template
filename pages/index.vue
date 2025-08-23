@@ -39,6 +39,9 @@
               <Button as-child variant="outline" size="sm">
                 <NuxtLink to="/settings">Settings</NuxtLink>
               </Button>
+              <Button as-child variant="outline" size="sm">
+                <NuxtLink to="/sync-test">Sync Test</NuxtLink>
+              </Button>
             </div>
           </div>
         </div>
