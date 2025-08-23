@@ -1,13 +1,20 @@
 <template>
   <!-- Main Dashboard -->
   <main v-auto-animate class="h-screen max-h-screen">
-    Game
     <div v-if="!hasGameStarted">
       <div class="space-y-4">
         <h2 class="text-xl font-semibold">No Game in Progress</h2>
         <p class="text-muted-foreground">
           Start a new game to begin managing turns and timers.
         </p>
+        
+        <!-- Debug info -->
+        <div class="text-xs text-muted-foreground border p-2 rounded">
+          <div>Connection Status: {{ connectionStatus }}</div>
+          <div>Houses Count: {{ gameState.ironThroneOrder.length }}</div>
+          <div>Has Game Started: {{ hasGameStarted }}</div>
+        </div>
+        
         <Button as-child size="lg">
           <NuxtLink to="/setup">Start New Game</NuxtLink>
         </Button>
@@ -122,6 +129,7 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
+const connectionStatus = gameStateManager.connectionStatus;
 
 const hasGameStarted = computed(() => {
   return gameState.value.ironThroneOrder.length > 0;
@@ -158,8 +166,5 @@ const shouldHighlightKingsCourt = computed(() => {
   return currentSubPhase?.id === "messenger-raven";
 });
 
-// Load game state on mount
-onMounted(() => {
-  gameStateManager.loadGameState();
-});
+// Note: Game state loading is handled by the useGameState composable
 </script>

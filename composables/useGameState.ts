@@ -55,10 +55,12 @@ export const useGameState = () => {
     if (typeof window === 'undefined') return
     
     try {
+      console.log('💾 Saving game state to localStorage:', gameState.value)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState.value))
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings.value))
+      console.log('✅ Game state saved successfully')
     } catch (error) {
-      console.warn('Failed to save game state:', error)
+      console.warn('❌ Failed to save game state:', error)
     }
   }
   
@@ -81,8 +83,14 @@ export const useGameState = () => {
       
       // Listen for game state updates from other devices
       realtimeSync.onGameStateUpdate(({ gameState: newState, timestamp }) => {
-        console.log('Received game state update from another device:', newState)
+        console.log('🔄 Received game state update from another device:', newState)
+        console.log('📊 Iron Throne Order:', newState.ironThroneOrder)
+        console.log('🎮 Has Game Started (before):', gameState.value.ironThroneOrder.length > 0)
+        
         gameState.value = { ...initialGameState, ...newState }
+        
+        console.log('🎮 Has Game Started (after):', gameState.value.ironThroneOrder.length > 0)
+        console.log('💾 Triggering save to localStorage...')
       })
       
       // Listen for settings updates from other devices
@@ -141,6 +149,10 @@ export const useGameState = () => {
       currentSubPhase: PLANNING_SUBPHASES[0], // Start with Assign Orders
       gameStartTime: Date.now() // Save timestamp when game starts
     }
+    
+    console.log('🎯 Game initialized with houses:', ironThroneOrder)
+    // Explicitly broadcast the new game state
+    broadcastStateChange()
   }
   
   const nextPhase = () => {
@@ -374,7 +386,9 @@ export const useGameState = () => {
   
   // Initialize on mount
   onMounted(() => {
+    console.log('🔧 Initializing game state composable...')
     loadGameState()
+    console.log('📡 Setting up real-time sync listeners...')
     const cleanup = listenForStateChanges()
     
     // Cleanup when component unmounts (if available)

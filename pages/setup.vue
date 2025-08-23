@@ -577,8 +577,10 @@ const startGame = () => {
 
     // Apply custom durations
     if (Object.keys(customPhaseDurations).length > 0) {
-      gameStateManager.settings.value.customPhaseDurations =
-        customPhaseDurations;
+      gameStateManager.updateSettings({
+        ...gameStateManager.settings.value,
+        customPhaseDurations
+      });
     }
 
     // Navigate to the main dashboard
