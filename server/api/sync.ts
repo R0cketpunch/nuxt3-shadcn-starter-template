@@ -30,6 +30,25 @@ export default defineEventHandler(async (event) => {
         console.log('Game reset broadcasted via Pusher')
       }
       
+      // Timer control events
+      if (body.timerAction) {
+        const payload: any = {
+          action: body.timerAction,
+          timestamp: Date.now(),
+          serverTime: Date.now()
+        }
+        
+        // Include the appropriate value field
+        if (body.duration !== undefined) {
+          payload.duration = body.duration
+        }
+        if (body.timeAdjustment !== undefined) {
+          payload.timeAdjustment = body.timeAdjustment
+        }
+        
+        await pusher.trigger('game-channel', 'timer-action', payload)
+      }
+      
       return {
         success: true,
         timestamp: Date.now()

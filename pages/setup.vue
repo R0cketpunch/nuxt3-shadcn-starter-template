@@ -315,45 +315,33 @@
           </div>
         </div>
 
-        <!-- Phase Duration Customization -->
+        <!-- Assign Orders Timer Configuration -->
         <div class="space-y-4">
-          <h2 class="text-xl font-semibold">Phase Durations</h2>
+          <h2 class="text-xl font-semibold">Timer Configuration</h2>
           <p class="text-sm text-muted-foreground">
-            Customize timer durations for each game phase. Leave empty to use
-            defaults.
+            Set the duration for the Assign Orders timer during the Planning phase.
           </p>
 
-          <div class="space-y-4">
-            <div
-              v-for="phase in gamePhases"
-              :key="phase.id"
-              class="flex justify-between items-center p-4 rounded-lg border"
-            >
-              <div>
-                <div class="font-semibold">{{ phase.name }}</div>
-                <div class="text-sm text-muted-foreground">
-                  {{ phase.description }}
-                </div>
+          <div class="flex justify-between items-center p-4 rounded-lg border">
+            <div>
+              <div class="font-semibold">Assign Orders Timer</div>
+              <div class="text-sm text-muted-foreground">
+                Timer for players to assign order tokens during Planning phase
               </div>
+            </div>
 
-              <div class="flex items-center space-x-2">
-                <span class="text-sm text-muted-foreground"
-                  >Default: {{ formatDuration(phase.defaultDuration) }}</span
-                >
-                <input
-                  :value="getPhaseDurationValue(phase.id)"
-                  @input="setPhaseDurationValue(phase.id, ($event.target as HTMLInputElement).value)"
-                  type="number"
-                  :placeholder="
-                    Math.floor(phase.defaultDuration / 60).toString()
-                  "
-                  class="px-3 py-2 w-20 rounded-md border"
-                  min="1"
-                  max="60"
-                  step="1"
-                />
-                <span class="text-sm text-muted-foreground">minutes</span>
-              </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-muted-foreground">Default: 5min</span>
+              <input
+                v-model.number="assignOrdersDuration"
+                type="number"
+                placeholder="5"
+                class="px-3 py-2 w-20 rounded-md border"
+                min="1"
+                max="30"
+                step="1"
+              />
+              <span class="text-sm text-muted-foreground">minutes</span>
             </div>
           </div>
         </div>
@@ -392,7 +380,6 @@
 import { CheckCircle, Crown, GripVertical, Play } from "lucide-vue-next";
 import {
   HOUSES,
-  GAME_PHASES,
   getAvailableHouses,
   getStartingIronThroneOrder,
 } from "~/types/game";
@@ -405,7 +392,7 @@ const router = useRouter();
 
 const selectedPlayerCount = ref<number>(0);
 const selectedHouses = ref<House[]>([]);
-const customDurations = ref<Record<string, number>>({});
+const assignOrdersDuration = ref<number>(5); // Default 5 minutes
 const errorMessage = ref("");
 
 // New state for the multi-step setup
@@ -413,26 +400,7 @@ const setupStep = ref<'player-count' | 'player-names' | 'house-assignment' | 'fi
 const playerNames = ref<string[]>([]);
 const assignmentMethod = ref<'random' | 'manual'>('manual');
 
-// Initialize custom durations object with all phase IDs for proper reactivity
-const initializeCustomDurations = () => {
-  const durations: Record<string, number> = {}
-  gamePhases.forEach(phase => {
-    durations[phase.id] = customDurations.value[phase.id] || 0
-  })
-  customDurations.value = durations
-}
-
-// Get phase duration value for display (shows empty string if 0)
-const getPhaseDurationValue = (phaseId: string): string => {
-  const value = customDurations.value[phaseId]
-  return value > 0 ? value.toString() : ''
-}
-
-// Set phase duration value from input
-const setPhaseDurationValue = (phaseId: string, value: string) => {
-  const numValue = parseInt(value) || 0
-  customDurations.value[phaseId] = numValue
-}
+// No complex duration handling needed - just one simple timer
 
 const availableHouses = computed(() => {
   return selectedPlayerCount.value > 0
@@ -446,7 +414,7 @@ const startingIronThroneOrder = computed(() => {
     : [];
 });
 
-const gamePhases = GAME_PHASES;
+// gamePhases no longer needed - we only have one timer now
 
 const canStartGame = computed(() => {
   return selectedHouses.value.length === selectedPlayerCount.value;
@@ -507,10 +475,7 @@ const toggleHouseSelection = (house: House) => {
   }
 };
 
-const formatDuration = (seconds: number) => {
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}m`;
-};
+// formatDuration no longer needed
 
 const proceedToHouseAssignment = () => {
   if (!canProceedToHouseAssignment.value) {
@@ -564,22 +529,16 @@ const startGame = () => {
   }
 
   try {
-    // Set up custom durations
-    const customPhaseDurations: Record<string, number> = {};
-    Object.entries(customDurations.value).forEach(([phaseId, minutes]) => {
-      if (minutes && minutes > 0) {
-        customPhaseDurations[phaseId] = minutes * 60; // Convert to seconds
-      }
-    });
-
     // Initialize the game with selected houses (Iron Throne order will be set automatically)
     gameStateManager.initializeGame(selectedHouses.value);
 
-    // Apply custom durations
-    if (Object.keys(customPhaseDurations).length > 0) {
+    // Apply assign orders timer duration if customized
+    if (assignOrdersDuration.value && assignOrdersDuration.value !== 5) {
       gameStateManager.updateSettings({
         ...gameStateManager.settings.value,
-        customPhaseDurations
+        customPhaseDurations: {
+          'planning': assignOrdersDuration.value * 60 // Convert to seconds
+        }
       });
     }
 
@@ -606,8 +565,5 @@ watch([selectedPlayerCount, setupStep], ([count, step]) => {
   }
 });
 
-// Initialize custom durations on mount
-onMounted(() => {
-  initializeCustomDurations();
-});
+// No initialization needed for the simple timer approach
 </script>

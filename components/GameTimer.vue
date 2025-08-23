@@ -152,7 +152,7 @@ const props = withDefaults(defineProps<Props>(), {
   gameStartTime: undefined,
 });
 
-const timer = useGameTimer();
+const timer = useGlobalGameTimer();
 const gameState = useGameState();
 const circumference = 2 * Math.PI * 45;
 
@@ -166,10 +166,11 @@ watch(
   [shouldCountdown],
   () => {
     if (shouldCountdown.value) {
-      // Automatically start countdown timer when entering Assign Orders phase
-      timer.startTimer(props.duration, true, props.gameStartTime);
+      // Only reset timer to show the duration, don't auto-start
+      // The control page will handle starting the timer manually
+      timer.resetTimer(props.duration, true, props.gameStartTime);
     } else {
-      // Start total game time tracking when not in countdown mode
+      // Start total game time tracking when not in countdown mode  
       timer.startTimer(props.duration, false, props.gameStartTime);
     }
   },

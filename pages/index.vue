@@ -8,12 +8,6 @@
           Start a new game to begin managing turns and timers.
         </p>
         
-        <!-- Debug info -->
-        <div class="text-xs text-muted-foreground border p-2 rounded">
-          <div>Connection Status: {{ connectionStatus }}</div>
-          <div>Houses Count: {{ gameState.ironThroneOrder.length }}</div>
-          <div>Has Game Started: {{ hasGameStarted }}</div>
-        </div>
         
         <Button as-child size="lg">
           <NuxtLink to="/setup">Start New Game</NuxtLink>
@@ -129,7 +123,6 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
-const connectionStatus = gameStateManager.connectionStatus;
 
 const hasGameStarted = computed(() => {
   return gameState.value.ironThroneOrder.length > 0;

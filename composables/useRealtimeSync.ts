@@ -84,6 +84,15 @@ export const useRealtimeSync = () => {
     })
   }
   
+  const onTimerAction = (callback: (data: { action: string, duration?: number, timeAdjustment?: number, timestamp: number, serverTime: number }) => void) => {
+    if (!channel) return
+    
+    channel.bind('timer-action', (data: { action: string, duration?: number, timeAdjustment?: number, timestamp: number, serverTime: number }) => {
+      console.log('Received timer action from Pusher:', data)
+      callback(data)
+    })
+  }
+  
   const broadcastGameState = async (gameState: GameState) => {
     try {
       console.log('🚀 Broadcasting game state update:', gameState)
@@ -138,6 +147,30 @@ export const useRealtimeSync = () => {
     }
   }
   
+  const broadcastTimerAction = async (action: string, value?: number) => {
+    try {
+      const body: any = { timerAction: action }
+      
+      // Use different field names for different actions
+      if (action === 'addTime') {
+        body.timeAdjustment = value
+      } else {
+        body.duration = value
+      }
+      
+      const response = await $fetch('/api/sync', {
+        method: 'POST',
+        body
+      })
+      
+      if (!response.success) {
+        console.error('❌ Failed to broadcast timer action:', response)
+      }
+    } catch (error) {
+      console.error('❌ Error broadcasting timer action:', error)
+    }
+  }
+  
   return {
     isConnected: readonly(isConnected),
     connectionStatus: readonly(connectionStatus),
@@ -146,8 +179,10 @@ export const useRealtimeSync = () => {
     onGameStateUpdate,
     onSettingsUpdate,
     onGameReset,
+    onTimerAction,
     broadcastGameState,
     broadcastSettings,
-    broadcastReset
+    broadcastReset,
+    broadcastTimerAction
   }
 }

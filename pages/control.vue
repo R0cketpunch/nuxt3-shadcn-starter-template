@@ -44,8 +44,9 @@
         <div class="grid gap-4">
           <h2 class="text-xl font-semibold">Game Flow Control</h2>
           
-          <!-- Main Phase Control -->
-          <div class="grid grid-cols-2 gap-4">
+          <!-- Main Controls -->
+          <div class="grid gap-4" :class="showAssignOrdersTimer ? 'grid-cols-2' : 'grid-cols-1'">
+            <!-- Phase Control -->
             <Card>
               <CardHeader>
                 <CardTitle class="flex items-center gap-2">
@@ -79,33 +80,84 @@
               </CardContent>
             </Card>
 
-            <Card>
+            <!-- Assign Orders Timer (only shown during assign-orders sub-phase) -->
+            <Card v-if="showAssignOrdersTimer">
               <CardHeader>
                 <CardTitle class="flex items-center gap-2">
                   <Timer class="w-5 h-5" />
-                  Timer Control
+                  Assign Orders Timer
                 </CardTitle>
               </CardHeader>
               <CardContent class="space-y-4">
-                <div class="text-sm">
-                  <div class="font-medium">Duration: {{ currentPhaseDuration }}s</div>
+                <div class="text-sm space-y-1">
+                  <div class="font-medium">{{ timer.formatTime(timer.timeRemaining.value) }}</div>
                   <div class="text-muted-foreground">
-                    {{ gameState.isPaused ? 'Paused' : 'Running' }}
+                    {{ timer.isPaused.value ? 'Paused' : timer.isActive.value ? 'Running' : 'Stopped' }}
                   </div>
                 </div>
                 
-                <Button 
-                  @click="toggleEmergencyPause" 
-                  :variant="gameState.isPaused ? 'default' : 'outline'"
-                  class="w-full"
-                  size="lg"
-                >
-                  <component 
-                    :is="gameState.isPaused ? Play : Pause" 
-                    class="mr-2 w-4 h-4" 
-                  />
-                  {{ gameState.isPaused ? 'Resume' : 'Pause' }} Timer
-                </Button>
+                <!-- Timer Controls -->
+                <div class="flex space-x-2">
+                  <!-- Start Timer Button -->
+                  <Button 
+                    v-if="!timer.isActive.value"
+                    @click="startAssignOrdersTimer"
+                    class="flex-1"
+                    size="lg"
+                  >
+                    <Play class="mr-2 w-4 h-4" />
+                    Start Timer
+                  </Button>
+                  
+                  <!-- Pause Button -->
+                  <Button
+                    v-if="timer.isActive.value && !timer.isPaused.value"
+                    @click="pauseTimer"
+                    variant="outline"
+                    size="icon"
+                  >
+                    <Pause class="w-4 h-4" />
+                  </Button>
+                  
+                  <!-- Resume Button -->
+                  <Button
+                    v-if="timer.isActive.value && timer.isPaused.value"
+                    @click="resumeTimer"
+                    size="icon"
+                  >
+                    <Play class="w-4 h-4" />
+                  </Button>
+                  
+                  <!-- Reset Button -->
+                  <Button 
+                    @click="resetAssignOrdersTimer" 
+                    variant="outline" 
+                    size="icon"
+                    :disabled="!timer.isActive.value"
+                  >
+                    <RotateCcw class="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <!-- Quick Time Adjustments -->
+                <div v-if="timer.isActive.value" class="flex space-x-2">
+                  <Button
+                    @click="addTime(-60)"
+                    variant="ghost"
+                    size="sm"
+                    :disabled="!timer.isActive.value"
+                  >
+                    -1m
+                  </Button>
+                  <Button
+                    @click="addTime(60)"
+                    variant="ghost"
+                    size="sm"
+                    :disabled="!timer.isActive.value"
+                  >
+                    +1m
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -237,9 +289,9 @@
                 <span class="font-medium">Game Started:</span>
                 {{ formatGameStartTime }}
               </div>
-              <div>
-                <span class="font-medium">Phase Duration:</span>
-                {{ currentPhaseDuration }}s
+              <div v-if="showAssignOrdersTimer">
+                <span class="font-medium">Assign Orders Duration:</span>
+                {{ assignOrdersTimerMinutes }}min
               </div>
             </div>
           </CardContent>
@@ -271,6 +323,7 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
+const timer = useGlobalGameTimer();
 
 const importFileInput = ref<HTMLInputElement | null>(null);
 const announcementModal = ref<{ show: (title: string, subtitle?: string) => void } | null>(null);
@@ -279,16 +332,21 @@ const hasGameStarted = computed(() => {
   return gameState.value.ironThroneOrder.length > 0;
 });
 
-const currentPhaseDuration = computed(() => {
-  return gameStateManager.getPhaseDuration(gameState.value.currentPhase.id);
-});
-
 const currentPhase = computed(() => {
   return gameState.value.currentPhase.name;
 });
 
 const currentSubPhase = computed(() => {
   return gameState.value.currentSubPhase?.name;
+});
+
+const showAssignOrdersTimer = computed(() => {
+  return gameState.value.currentPhase.id === 'planning' && 
+         gameState.value.currentSubPhase?.id === 'assign-orders';
+});
+
+const assignOrdersTimerMinutes = computed(() => {
+  return Math.floor(currentPhaseDuration.value / 60);
 });
 
 const formatGameStartTime = computed(() => {
@@ -317,8 +375,30 @@ const getNextStepName = computed(() => {
   return "Continue";
 });
 
-const toggleEmergencyPause = () => {
-  gameStateManager.togglePause();
+const currentPhaseDuration = computed(() => {
+  return gameStateManager.getPhaseDuration(gameState.value.currentPhase.id);
+});
+
+const realtimeSync = useRealtimeSync();
+
+const startAssignOrdersTimer = () => {
+  realtimeSync.broadcastTimerAction('start', currentPhaseDuration.value);
+};
+
+const resetAssignOrdersTimer = () => {
+  realtimeSync.broadcastTimerAction('reset', currentPhaseDuration.value);
+};
+
+const pauseTimer = () => {
+  realtimeSync.broadcastTimerAction('pause');
+};
+
+const resumeTimer = () => {
+  realtimeSync.broadcastTimerAction('resume');
+};
+
+const addTime = (seconds: number) => {
+  realtimeSync.broadcastTimerAction('addTime', seconds);
 };
 
 const advancePhase = () => {
@@ -400,8 +480,4 @@ const handleImportFile = (event: Event) => {
   };
   reader.readAsText(file);
 };
-
-onMounted(() => {
-  gameStateManager.loadGameState();
-});
 </script>

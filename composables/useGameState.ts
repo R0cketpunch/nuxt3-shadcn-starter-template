@@ -4,6 +4,15 @@ import { GAME_PHASES, WESTEROS_SUBPHASES, PLANNING_SUBPHASES, ACTION_SUBPHASES, 
 const STORAGE_KEY = 'agot-gm-game-state'
 const SETTINGS_KEY = 'agot-gm-settings'
 
+// Global event deduplication - track last processed timestamp for each action type
+const lastProcessedTimerAction: Record<string, number> = {
+  start: 0,
+  pause: 0,
+  resume: 0,
+  reset: 0,
+  addTime: 0
+}
+
 export const useGameState = () => {
   const realtimeSync = useRealtimeSync()
   const initialGameState: GameState = {
@@ -55,12 +64,10 @@ export const useGameState = () => {
     if (typeof window === 'undefined') return
     
     try {
-      console.log('💾 Saving game state to localStorage:', gameState.value)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState.value))
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings.value))
-      console.log('✅ Game state saved successfully')
     } catch (error) {
-      console.warn('❌ Failed to save game state:', error)
+      console.warn('Failed to save game state:', error)
     }
   }
   
@@ -75,36 +82,76 @@ export const useGameState = () => {
     }
   }
   
+  // Track if listeners are already set up to prevent duplicates
+  let listenersInitialized = false
+  
   // Listen for state changes from other devices via Pusher
   const listenForStateChanges = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !listenersInitialized) {
+      listenersInitialized = true
+      
       // Connect to Pusher
       realtimeSync.connect()
       
       // Listen for game state updates from other devices
       realtimeSync.onGameStateUpdate(({ gameState: newState, timestamp }) => {
-        console.log('🔄 Received game state update from another device:', newState)
-        console.log('📊 Iron Throne Order:', newState.ironThroneOrder)
-        console.log('🎮 Has Game Started (before):', gameState.value.ironThroneOrder.length > 0)
-        
         gameState.value = { ...initialGameState, ...newState }
-        
-        console.log('🎮 Has Game Started (after):', gameState.value.ironThroneOrder.length > 0)
-        console.log('💾 Triggering save to localStorage...')
       })
       
       // Listen for settings updates from other devices
       realtimeSync.onSettingsUpdate(({ settings: newSettings, timestamp }) => {
-        console.log('Received settings update from another device:', newSettings)
         settings.value = { ...initialSettings, ...newSettings }
       })
       
       // Listen for game reset from other devices
       realtimeSync.onGameReset(({ timestamp }) => {
-        console.log('Received game reset from another device')
         gameState.value = { ...initialGameState }
         if (typeof window !== 'undefined') {
           localStorage.removeItem(STORAGE_KEY)
+        }
+      })
+      
+      // Listen for timer actions from other devices
+      realtimeSync.onTimerAction(({ action, duration, timeAdjustment, timestamp, serverTime }) => {
+        // Check if we've already processed this timestamp for this action type
+        const lastTimestamp = lastProcessedTimerAction[action] || 0
+        if (lastTimestamp >= timestamp) {
+          console.warn('🔄 Duplicate timer event ignored:', action)
+          return
+        }
+        
+        // Mark this timestamp as processed for this action type
+        lastProcessedTimerAction[action] = timestamp
+        
+        const timer = useGlobalGameTimer()
+        
+        // Calculate time drift to sync with the remote device
+        const timeDrift = Date.now() - serverTime
+        
+        switch (action) {
+          case 'start':
+            if (duration) {
+              timer.startTimer(duration, true)
+            }
+            break
+          case 'pause':
+            timer.pauseTimer()
+            break
+          case 'resume':
+            timer.resumeTimer()
+            break
+          case 'reset':
+            if (duration) {
+              timer.resetTimer(duration, true)
+            }
+            break
+          case 'addTime':
+            if (timeAdjustment !== undefined) {
+              timer.addTime(timeAdjustment)
+            } else {
+              console.warn('❌ addTime action but no timeAdjustment value');
+            }
+            break
         }
       })
       
@@ -150,7 +197,6 @@ export const useGameState = () => {
       gameStartTime: Date.now() // Save timestamp when game starts
     }
     
-    console.log('🎯 Game initialized with houses:', ironThroneOrder)
     // Explicitly broadcast the new game state
     broadcastStateChange()
   }
@@ -386,9 +432,7 @@ export const useGameState = () => {
   
   // Initialize on mount
   onMounted(() => {
-    console.log('🔧 Initializing game state composable...')
     loadGameState()
-    console.log('📡 Setting up real-time sync listeners...')
     const cleanup = listenForStateChanges()
     
     // Cleanup when component unmounts (if available)

@@ -122,6 +122,12 @@ export const useGameTimer = () => {
   };
 
   const addTime = (seconds: number) => {
+    // Defensive check - ensure seconds is a reasonable number
+    if (typeof seconds !== 'number' || isNaN(seconds) || Math.abs(seconds) > 3600) {
+      console.error('❌ addTime called with invalid seconds:', seconds);
+      return;
+    }
+    
     timeRemaining.value = Math.max(0, timeRemaining.value + seconds);
   };
 
