@@ -98,7 +98,7 @@ export const useSSE = () => {
       clearTimeout(heartbeatTimeout)
     }
     
-    // Expect a heartbeat within 10 seconds
+    // Expect a heartbeat within 5 seconds (server sends every 2 seconds)
     heartbeatTimeout = setTimeout(() => {
       console.log('SSE heartbeat timeout, reconnecting...')
       if (shouldReconnect) {
@@ -111,14 +111,11 @@ export const useSSE = () => {
         connectionStatus.value = 'connecting'
         scheduleReconnect()
       }
-    }, 10000)
+    }, 5000) // Shorter timeout for faster detection
   }
 
   const send = async (message: any) => {
-    if (!isConnected.value && connectionStatus.value !== 'connecting') {
-      return false
-    }
-    
+    // Always try to send, even if connection seems down - it might recover
     try {
       const response = await $fetch('/api/sse', {
         method: 'POST',
@@ -127,9 +124,23 @@ export const useSSE = () => {
           clientId: clientId.value
         }
       })
+      
+      // If send succeeds but we're not connected, try to reconnect
+      if (!isConnected.value) {
+        console.log('Send succeeded but not connected, attempting reconnect...')
+        scheduleReconnect()
+      }
+      
       return true
     } catch (error) {
       console.error('Failed to send SSE message:', error)
+      
+      // If send fails, try to reconnect 
+      if (shouldReconnect && !reconnectTimer) {
+        console.log('Send failed, attempting reconnect...')
+        scheduleReconnect()
+      }
+      
       return false
     }
   }
@@ -137,11 +148,11 @@ export const useSSE = () => {
   const scheduleReconnect = () => {
     if (reconnectTimer) return
     
-    // Shorter reconnect delay for SSE since connections close more frequently on Vercel
+    // Immediate reconnect for real-time experience
     reconnectTimer = setTimeout(() => {
       console.log('Attempting to reconnect SSE...')
       connect()
-    }, 1000)
+    }, 100) // Reconnect after just 100ms
   }
 
   const messageHandlers = new Map<string, (data: any) => void>()
@@ -164,9 +175,9 @@ export const useSSE = () => {
         return
       }
       
-      // Handle timeout message - server is closing connection
-      if (message.type === 'timeout') {
-        console.log('SSE connection timeout, preparing to reconnect...')
+      // Handle timeout/reconnect message - server is closing connection
+      if (message.type === 'timeout' || message.type === 'reconnect') {
+        console.log('SSE connection cycling, reconnecting immediately...')
         if (eventSource) {
           eventSource.close()
           eventSource = null

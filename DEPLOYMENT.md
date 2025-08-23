@@ -16,9 +16,9 @@
 ## Troubleshooting
 
 ### If SSE connections keep disconnecting:
-- This is normal on Vercel due to serverless function timeouts (every ~23 seconds)
-- Connections automatically reconnect every 1 second for seamless experience
-- Heartbeat monitoring ensures missed messages are caught
+- This is normal on Vercel - connections cycle every 15 seconds
+- Connections automatically reconnect in 100ms for instant recovery
+- Heartbeat every 2 seconds ensures fast connection monitoring
 - The app maintains state through localStorage as fallback
 
 ### If synchronization isn't working:
@@ -37,14 +37,15 @@
 | Feature | Local (WebSocket) | Production (SSE) |
 |---------|------------------|------------------|
 | Connection Type | Persistent WebSocket | Server-Sent Events |
-| Reconnection | Every 3 seconds | Every 1 second |
-| Connection Duration | Indefinite | ~25 seconds |
+| Reconnection | Every 3 seconds | 100ms |
+| Connection Duration | Indefinite | ~15 seconds |
 | Bidirectional | Yes | No (uses POST for client→server) |
 | Server Resource | Dedicated WebSocket server | Serverless functions |
 
 ## Performance Notes
 
-- SSE connections close every 25 seconds to avoid Vercel timeout
-- Fast reconnection (1s) maintains near-real-time experience
-- State changes trigger immediate sync across all devices
+- SSE connections cycle every 15 seconds with 100ms reconnection
+- Sub-second real-time experience on Vercel
+- Heartbeat every 2 seconds ensures fast connection monitoring
+- Aggressive reconnection strategy maintains continuous sync
 - localStorage provides instant same-device multi-tab sync

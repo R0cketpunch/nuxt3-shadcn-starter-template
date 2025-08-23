@@ -80,9 +80,8 @@ export default defineEventHandler(async (event) => {
     }
     event.node.res.write(`data: ${JSON.stringify(clientIdMessage)}\n\n`)
     
-    // Keep connection alive with periodic heartbeat
-    // Note: Vercel has a 10-second timeout for serverless functions
-    // So we send heartbeats more frequently and handle timeouts gracefully
+    // Keep connection alive with minimal heartbeat
+    // Send heartbeat every 2 seconds for faster connection monitoring
     const heartbeatInterval = setInterval(() => {
       try {
         event.node.res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`)
@@ -91,7 +90,7 @@ export default defineEventHandler(async (event) => {
         clearInterval(heartbeatInterval)
         activeConnections.delete(clientId)
       }
-    }, 5000) // Send heartbeat every 5 seconds
+    }, 2000) // Send heartbeat every 2 seconds
     
     // Handle client disconnect
     event.node.req.on('close', () => {
@@ -100,19 +99,20 @@ export default defineEventHandler(async (event) => {
       activeConnections.delete(clientId)
     })
     
-    // Automatically close connection after 25 seconds to avoid Vercel timeout
+    // Close connection after 15 seconds and let client reconnect immediately
+    // This ensures fast reconnection cycles for real-time experience
     const autoCloseTimeout = setTimeout(() => {
-      console.log(`SSE connection auto-closed to avoid timeout: ${clientId}`)
+      console.log(`SSE connection cycling for ${clientId}`)
       clearInterval(heartbeatInterval)
       activeConnections.delete(clientId)
       try {
-        // Send a final message before closing
-        event.node.res.write(`data: ${JSON.stringify({ type: 'timeout', timestamp: Date.now() })}\n\n`)
+        // Send a final message before closing to trigger immediate reconnect
+        event.node.res.write(`data: ${JSON.stringify({ type: 'reconnect', timestamp: Date.now() })}\n\n`)
         event.node.res.end()
       } catch (error) {
         // Connection may already be closed
       }
-    }, 23000) // Close after 23 seconds to be safe
+    }, 15000) // Close after 15 seconds for faster cycling
     
     // Clean up timeout if connection closes naturally
     event.node.req.on('close', () => {

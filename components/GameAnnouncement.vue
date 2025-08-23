@@ -26,7 +26,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  duration: 20000,
+  duration: 200,
 });
 
 const isVisible = ref(false);
