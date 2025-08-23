@@ -451,14 +451,13 @@ export const useGameState = () => {
     loadGameState()
     const cleanup = listenForStateChanges()
     
-    // Connect to WebSocket for real-time sync
-    connect()
+    // Real-time connection is now auto-managed by the composables
+    // No need to manually call connect() here
     
     // Cleanup when component unmounts (if available)
     if (typeof onBeforeUnmount === 'function') {
       onBeforeUnmount(() => {
         cleanup()
-        disconnect()
       })
     }
   })

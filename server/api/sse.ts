@@ -106,11 +106,13 @@ export default defineEventHandler(async (event) => {
       clearInterval(heartbeatInterval)
       activeConnections.delete(clientId)
       try {
+        // Send a final message before closing
+        event.node.res.write(`data: ${JSON.stringify({ type: 'timeout', timestamp: Date.now() })}\n\n`)
         event.node.res.end()
       } catch (error) {
         // Connection may already be closed
       }
-    }, 25000) // Close after 25 seconds
+    }, 23000) // Close after 23 seconds to be safe
     
     // Clean up timeout if connection closes naturally
     event.node.req.on('close', () => {

@@ -153,6 +153,11 @@ export const useWebSocket = () => {
     }
   }
 
+  // Auto-connect when composable is created
+  onMounted(() => {
+    connect()
+  })
+
   // Cleanup on unmount
   onBeforeUnmount(() => {
     disconnect()

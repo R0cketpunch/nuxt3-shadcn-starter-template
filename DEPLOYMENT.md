@@ -16,8 +16,9 @@
 ## Troubleshooting
 
 ### If SSE connections keep disconnecting:
-- This is normal on Vercel due to serverless function timeouts
-- Connections automatically reconnect every 1 second
+- This is normal on Vercel due to serverless function timeouts (every ~23 seconds)
+- Connections automatically reconnect every 1 second for seamless experience
+- Heartbeat monitoring ensures missed messages are caught
 - The app maintains state through localStorage as fallback
 
 ### If synchronization isn't working:
