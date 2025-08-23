@@ -175,53 +175,70 @@
         </div>
 
         <!-- Influence Track Controls (Westeros Phase Only) -->
-        <div v-if="gameState.currentPhase.id === 'westeros'" class="space-y-4">
-          <h2 class="text-xl font-semibold">Influence Track Management</h2>
+        <div
+          v-if="gameState.currentPhase.id === 'westeros'"
+          class="flex flex-col flex-1"
+        >
+          <!-- Track Navigation -->
+          <div class="grid grid-cols-3 gap-px border-b bg-muted">
+            <button
+              v-for="(track, index) in tracks"
+              :key="track.id"
+              @click="currentTrackIndex = index"
+              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              :class="
+                currentTrackIndex === index
+                  ? 'bg-foreground text-background'
+                  : 'bg-background'
+              "
+            >
+              {{ track.name }}
+            </button>
+          </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <!-- Iron Throne Track Control -->
-            <div class="bg-card border rounded-lg overflow-hidden">
-              <div class="p-3 border-b bg-muted">
-                <h3 class="font-medium text-center">Iron Throne Track</h3>
+          <!-- Swipeable Track Container -->
+          <div class="overflow-hidden relative flex-1">
+            <div
+              class="flex h-full transition-transform duration-300 ease-out"
+              :style="{ transform: `translateX(-${currentTrackIndex * 100}%)` }"
+              @touchstart="handleTouchStart"
+              @touchend="handleTouchEnd"
+            >
+              <!-- Iron Throne Track -->
+              <div class="flex-shrink-0 w-full bg-card">
+                <InfluenceTrack
+                  :houses="[...gameState.ironThroneOrder]"
+                  track-title="Iron Throne"
+                  track-description="Turn order and tiebreakers"
+                  track-type="iron-throne"
+                  :allow-reordering="true"
+                  @reorder-houses="handleIronThroneReorder"
+                />
               </div>
-              <InfluenceTrack
-                :houses="[...gameState.ironThroneOrder]"
-                track-title="Iron Throne"
-                track-description="Turn order and tiebreakers"
-                track-type="iron-throne"
-                :allow-reordering="true"
-                @reorder-houses="handleIronThroneReorder"
-              />
-            </div>
 
-            <!-- Fiefdoms Track Control -->
-            <div class="bg-card border rounded-lg overflow-hidden">
-              <div class="p-3 border-b bg-muted">
-                <h3 class="font-medium text-center">Fiefdoms Track</h3>
+              <!-- Fiefdoms Track -->
+              <div class="flex-shrink-0 w-full bg-card">
+                <InfluenceTrack
+                  :houses="[...gameState.fiefdomsOrder]"
+                  track-title="Fiefdoms"
+                  track-description="Combat strength bonuses"
+                  track-type="fiefdoms"
+                  :allow-reordering="true"
+                  @reorder-houses="handleFiefdomsReorder"
+                />
               </div>
-              <InfluenceTrack
-                :houses="[...gameState.fiefdomsOrder]"
-                track-title="Fiefdoms"
-                track-description="Combat strength bonuses"
-                track-type="fiefdoms"
-                :allow-reordering="true"
-                @reorder-houses="handleFiefdomsReorder"
-              />
-            </div>
 
-            <!-- King's Court Track Control -->
-            <div class="bg-card border rounded-lg overflow-hidden">
-              <div class="p-3 border-b bg-muted">
-                <h3 class="font-medium text-center">King's Court Track</h3>
+              <!-- King's Court Track -->
+              <div class="flex-shrink-0 w-full bg-card">
+                <InfluenceTrack
+                  :houses="[...gameState.kingsCourtOrder]"
+                  track-title="King's Court"
+                  track-description="Special order tokens"
+                  track-type="kings-court"
+                  :allow-reordering="true"
+                  @reorder-houses="handleKingsCourtReorder"
+                />
               </div>
-              <InfluenceTrack
-                :houses="[...gameState.kingsCourtOrder]"
-                track-title="King's Court"
-                track-description="Special order tokens"
-                track-type="kings-court"
-                :allow-reordering="true"
-                @reorder-houses="handleKingsCourtReorder"
-              />
             </div>
           </div>
         </div>
@@ -320,6 +337,45 @@ const timeComponents = computed(() => {
 });
 
 const realtimeSync = useRealtimeSync();
+
+// Influence track carousel state
+const currentTrackIndex = ref(0);
+const tracks = [
+  { id: "iron-throne", name: "Iron Throne" },
+  { id: "fiefdoms", name: "Fiefdoms" },
+  { id: "kings-court", name: "King's Court" },
+];
+
+// Touch handling for swipe gestures
+let touchStartX = 0;
+let touchEndX = 0;
+
+const handleTouchStart = (e: TouchEvent) => {
+  touchStartX = e.changedTouches[0].screenX;
+};
+
+const handleTouchEnd = (e: TouchEvent) => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+};
+
+const handleSwipe = () => {
+  const swipeThreshold = 50; // Minimum distance for a swipe
+  const swipeDistance = touchStartX - touchEndX;
+
+  if (Math.abs(swipeDistance) > swipeThreshold) {
+    if (swipeDistance > 0) {
+      // Swiped left - go to next track
+      currentTrackIndex.value = Math.min(
+        currentTrackIndex.value + 1,
+        tracks.length - 1
+      );
+    } else {
+      // Swiped right - go to previous track
+      currentTrackIndex.value = Math.max(currentTrackIndex.value - 1, 0);
+    }
+  }
+};
 
 const startAssignOrdersTimer = () => {
   realtimeSync.broadcastTimerAction("start", currentPhaseDuration.value);
