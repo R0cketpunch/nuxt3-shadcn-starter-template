@@ -115,6 +115,9 @@
       </div>
       <!-- Left Column: Game Controller -->
     </div>
+
+    <!-- Game Announcement Modal -->
+    <GameAnnouncement ref="announcementModal" title="" />
   </main>
 </template>
 
@@ -124,8 +127,21 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
 
+const announcementModal = ref<{ show: (title: string, subtitle?: string) => void } | null>(null);
+const realtimeSync = useRealtimeSync();
+
 const hasGameStarted = computed(() => {
   return gameState.value.ironThroneOrder.length > 0;
+});
+
+// Watch for round changes to trigger announcements
+let previousRound = gameState.value.currentRound;
+watch(() => gameState.value.currentRound, (newRound) => {
+  if (newRound > previousRound && newRound > 1) {
+    // Show announcement for new rounds (skip round 1 since that's the start)
+    announcementModal.value?.show(`Round ${newRound}`);
+  }
+  previousRound = newRound;
 });
 
 const currentPhaseDuration = computed(() => {
