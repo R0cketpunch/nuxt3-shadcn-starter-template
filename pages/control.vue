@@ -299,7 +299,7 @@ const showAssignOrdersTimer = computed(() => {
 });
 
 const assignOrdersTimerMinutes = computed(() => {
-  return Math.floor(currentPhaseDuration.value / 60);
+  return Math.floor(assignOrdersDuration.value / 60);
 });
 
 const formatGameStartTime = computed(() => {
@@ -328,8 +328,9 @@ const getNextStepName = computed(() => {
   return "Continue";
 });
 
-const currentPhaseDuration = computed(() => {
-  return gameStateManager.getPhaseDuration(gameState.value.currentPhase.id);
+// Get assign orders duration from settings
+const assignOrdersDuration = computed(() => {
+  return gameStateManager.settings.value.assignOrdersDuration;
 });
 
 const timeComponents = computed(() => {
@@ -387,11 +388,11 @@ const startAssignOrdersTimer = async () => {
     console.warn('Failed to initialize audio:', error)
   }
   
-  realtimeSync.broadcastTimerAction("start", currentPhaseDuration.value);
+  realtimeSync.broadcastTimerAction("start", assignOrdersDuration.value);
 };
 
 const resetAssignOrdersTimer = () => {
-  realtimeSync.broadcastTimerAction("reset", currentPhaseDuration.value);
+  realtimeSync.broadcastTimerAction("reset", assignOrdersDuration.value);
 };
 
 const pauseTimer = () => {

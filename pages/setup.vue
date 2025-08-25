@@ -315,7 +315,7 @@
           </div>
         </div>
 
-        <!-- Assign Orders Timer Configuration -->
+        <!-- Timer Configuration -->
         <div class="space-y-4">
           <h2 class="text-xl font-semibold">Timer Configuration</h2>
           <p class="text-sm text-muted-foreground">
@@ -331,11 +331,11 @@
             </div>
 
             <div class="flex items-center space-x-2">
-              <span class="text-sm text-muted-foreground">Default: 5min</span>
+              <span class="text-sm text-muted-foreground">Default: 8min</span>
               <input
                 v-model.number="assignOrdersDuration"
                 type="number"
-                placeholder="5"
+                placeholder="8"
                 class="px-3 py-2 w-20 rounded-md border"
                 min="1"
                 max="30"
@@ -392,8 +392,8 @@ const router = useRouter();
 
 const selectedPlayerCount = ref<number>(0);
 const selectedHouses = ref<House[]>([]);
-const assignOrdersDuration = ref<number>(5); // Default 5 minutes
 const errorMessage = ref("");
+const assignOrdersDuration = ref<number>(8); // Default 8 minutes
 
 // New state for the multi-step setup
 const setupStep = ref<'player-count' | 'player-names' | 'house-assignment' | 'final-setup'>('player-count');
@@ -529,18 +529,16 @@ const startGame = () => {
   }
 
   try {
-    // Initialize the game with selected houses (Iron Throne order will be set automatically)
-    gameStateManager.initializeGame(selectedHouses.value);
-
-    // Apply assign orders timer duration if customized
-    if (assignOrdersDuration.value && assignOrdersDuration.value !== 5) {
+    // Save timer duration settings before initializing the game
+    if (assignOrdersDuration.value !== 8) {
       gameStateManager.updateSettings({
         ...gameStateManager.settings.value,
-        customPhaseDurations: {
-          'planning': assignOrdersDuration.value * 60 // Convert to seconds
-        }
+        assignOrdersDuration: assignOrdersDuration.value * 60 // Convert minutes to seconds
       });
     }
+
+    // Initialize the game with selected houses (Iron Throne order will be set automatically)
+    gameStateManager.initializeGame(selectedHouses.value);
 
     // Navigate to the main dashboard
     router.push("/");

@@ -9,7 +9,6 @@ export interface House {
 export interface GamePhase {
   id: string;
   name: string; // 'Westeros', 'Planning', 'Action'
-  defaultDuration: number; // in seconds
   description: string;
   icon?: string; // Lucide icon name
 }
@@ -51,7 +50,7 @@ export interface GameSettings {
   audioEnabled: boolean;
   visualAlertsEnabled: boolean;
   darkTheme: boolean;
-  customPhaseDurations: Record<string, number>;
+  assignOrdersDuration: number; // in seconds, default 480 (8 minutes)
 }
 
 // Game constants
@@ -88,21 +87,18 @@ export const GAME_PHASES: GamePhase[] = [
   {
     id: "westeros",
     name: "Westeros",
-    defaultDuration: 300, // 5 minutes
     description: "Resolve Westeros cards and bid for influence tracks",
     icon: "Drama",
   },
   {
     id: "planning",
     name: "Planning",
-    defaultDuration: 600, // 10 minutes
     description: "Place orders face-down on areas containing units",
     icon: "Brain",
   },
   {
     id: "action",
     name: "Action",
-    defaultDuration: 900, // 15 minutes
     description: "Reveal and resolve orders",
     icon: "Swords",
   },

@@ -112,54 +112,6 @@
           </div>
         </div>
 
-        <!-- Timer Defaults -->
-        <div class="space-y-4">
-          <h2 class="text-xl font-semibold">Default Timer Durations</h2>
-          
-          <div class="space-y-4 p-6 border rounded-lg bg-card">
-            <p class="text-sm text-muted-foreground mb-4">
-              Set default timer durations for each phase. These will be used for all new games unless overridden during setup.
-            </p>
-            
-            <div class="space-y-4">
-              <div
-                v-for="phase in gamePhases"
-                :key="phase.id"
-                class="flex items-center justify-between p-4 border rounded-lg bg-background"
-              >
-                <div>
-                  <div class="font-semibold">{{ phase.name }}</div>
-                  <div class="text-sm text-muted-foreground">{{ phase.description }}</div>
-                </div>
-                
-                <div class="flex items-center space-x-3">
-                  <span class="text-sm text-muted-foreground">
-                    Built-in: {{ formatDuration(phase.defaultDuration) }}
-                  </span>
-                  <input
-                    :value="getPhaseDurationValue(phase.id)"
-                    @input="setPhaseDurationValue(phase.id, ($event.target as HTMLInputElement).value)"
-                    type="number"
-                    :placeholder="Math.floor(phase.defaultDuration / 60).toString()"
-                    class="w-20 px-3 py-2 border rounded-md text-center"
-                    min="1"
-                    max="60"
-                    step="1"
-                  />
-                  <span class="text-sm text-muted-foreground">min</span>
-                  <Button
-                    @click="resetPhaseDuration(phase.id)"
-                    size="sm"
-                    variant="ghost"
-                    class="p-1"
-                  >
-                    <RotateCcw class="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Data Management -->
         <div class="space-y-4">
@@ -241,16 +193,13 @@ import {
   Download, 
   Upload, 
   Save, 
-  Trash2, 
-  RotateCcw 
+  Trash2
 } from 'lucide-vue-next'
-import { GAME_PHASES } from '~/types/game'
 import type { GameSettings } from '~/types/game'
 
 const gameStateManager = useGameState()
 const colorMode = useColorMode()
 
-const gamePhases = GAME_PHASES
 const importFileInput = ref<HTMLInputElement | null>(null)
 const showSaveMessage = ref(false)
 
@@ -259,44 +208,14 @@ const localSettings = ref<GameSettings>({
   audioEnabled: true,
   visualAlertsEnabled: true,
   darkTheme: false,
-  customPhaseDurations: {}
+  assignOrdersDuration: 480 // 8 minutes default
 })
 
-// Initialize custom phase durations object with all phase IDs
-const initializeCustomDurations = () => {
-  const durations: Record<string, number> = {}
-  gamePhases.forEach(phase => {
-    durations[phase.id] = localSettings.value.customPhaseDurations[phase.id] || 0
-  })
-  localSettings.value.customPhaseDurations = durations
-}
 
-// Get phase duration value for display (shows empty string if 0)
-const getPhaseDurationValue = (phaseId: string): string => {
-  const value = localSettings.value.customPhaseDurations[phaseId]
-  return value > 0 ? value.toString() : ''
-}
-
-// Set phase duration value from input
-const setPhaseDurationValue = (phaseId: string, value: string) => {
-  const numValue = parseInt(value) || 0
-  localSettings.value.customPhaseDurations[phaseId] = numValue
-}
 
 // Initialize local settings from store
 onMounted(() => {
   localSettings.value = { ...gameStateManager.settings.value }
-  
-  // Convert stored seconds to minutes for display
-  Object.keys(localSettings.value.customPhaseDurations).forEach(key => {
-    const value = localSettings.value.customPhaseDurations[key]
-    if (value && value >= 60) {
-      localSettings.value.customPhaseDurations[key] = Math.floor(value / 60)
-    }
-  })
-  
-  // Ensure all phase IDs exist in customPhaseDurations for proper reactivity
-  initializeCustomDurations()
 })
 
 const setTheme = (theme: 'light' | 'dark') => {
@@ -337,28 +256,11 @@ const testAudio = (type: 'warning' | 'urgent') => {
   }
 }
 
-const formatDuration = (seconds: number) => {
-  const minutes = Math.floor(seconds / 60)
-  return `${minutes}m`
-}
-
-const resetPhaseDuration = (phaseId: string) => {
-  localSettings.value.customPhaseDurations[phaseId] = 0
-}
 
 const saveSettings = () => {
   // Create a copy of settings to save
   const settingsToSave = { ...localSettings.value }
   
-  // Convert minutes to seconds for storage and clean up empty values
-  const cleanedDurations: Record<string, number> = {}
-  Object.keys(settingsToSave.customPhaseDurations).forEach(key => {
-    const value = settingsToSave.customPhaseDurations[key]
-    if (value && value > 0) {
-      cleanedDurations[key] = value * 60  // Convert minutes to seconds
-    }
-  })
-  settingsToSave.customPhaseDurations = cleanedDurations
   
   // Update the store with converted values
   gameStateManager.updateSettings(settingsToSave)
@@ -419,7 +321,7 @@ const resetAllSettings = () => {
       audioEnabled: true,
       visualAlertsEnabled: true,
       darkTheme: false,
-      customPhaseDurations: {}
+      assignOrdersDuration: 480 // 8 minutes default
     }
     
     // Also reset color mode

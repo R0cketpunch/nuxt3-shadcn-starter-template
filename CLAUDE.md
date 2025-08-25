@@ -51,7 +51,7 @@ assets/css/        - Global styles (tailwind.css)
 ### Game Features
 - **Player Management**: Houses include optional playerName field for personalization
 - **Faction Restrictions**: Enforces official player count limitations (3-6 players with specific factions)
-- **Timer System**: Audio/visual alerts with customizable phase durations
+- **Timer System**: Audio/visual alerts for Assign Orders phase only (customizable duration, default 8 minutes)
 - **Iron Throne Track**: Determines turn order for Action Phase resolution (Raid → March → Consolidate)
 - **Turn Order Management**: Visual queue showing resolution order during Action sub-phases
 - **State Persistence**: LocalStorage with export/import functionality

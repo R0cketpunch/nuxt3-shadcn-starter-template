@@ -56,7 +56,7 @@
         :current-sub-phase="gameState.currentSubPhase"
       />
       <GameTimer
-        :duration="currentPhaseDuration"
+        :duration="assignOrdersDuration"
         :phase-text="currentPhase"
         :sub-phase-text="currentSubPhase"
         :current-sub-phase="gameState.currentSubPhase?.id"
@@ -148,8 +148,9 @@ watch(
   }
 );
 
-const currentPhaseDuration = computed(() => {
-  return gameStateManager.getPhaseDuration(gameState.value.currentPhase.id);
+// Get assign orders duration from settings
+const assignOrdersDuration = computed(() => {
+  return gameStateManager.settings.value.assignOrdersDuration;
 });
 
 const currentPhase = computed(() => {

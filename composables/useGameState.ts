@@ -33,7 +33,7 @@ export const useGameState = () => {
     audioEnabled: true,
     visualAlertsEnabled: true,
     darkTheme: false,
-    customPhaseDurations: {}
+    assignOrdersDuration: 480 // 8 minutes default
   }
   
   const gameState = ref<GameState>({ ...initialGameState })
@@ -365,15 +365,6 @@ export const useGameState = () => {
     }
   }
   
-  const getPhaseDuration = (phaseId: string): number => {
-    const customDuration = settings.value.customPhaseDurations[phaseId]
-    if (customDuration && customDuration > 0) {
-      return customDuration
-    }
-    
-    const phase = GAME_PHASES.find(p => p.id === phaseId)
-    return phase?.defaultDuration || 300
-  }
   
   const isGameComplete = (): boolean => {
     return gameState.value.currentRound > MAX_ROUNDS
@@ -485,7 +476,6 @@ export const useGameState = () => {
     resetGame,
     exportGameState,
     importGameState,
-    getPhaseDuration,
     isGameComplete,
     loadGameState,
     saveGameState,
