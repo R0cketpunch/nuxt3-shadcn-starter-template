@@ -226,6 +226,9 @@ export const useGameState = () => {
         gameState.value.currentPlayerIndex = 0
         // Play round transition sound
         gameAudio.playPhaseSound('round')
+      } else {
+        // Game has ended (reached max rounds)
+        gameAudio.playGameEndSound()
       }
     } else if (gameState.value.currentPhase.id === 'westeros') {
       gameState.value.currentPhase = GAME_PHASES[1] // Planning
@@ -265,6 +268,8 @@ export const useGameState = () => {
       if (currentSubPhaseIndex < WESTEROS_SUBPHASES.length - 1) {
         gameState.value.currentSubPhase = WESTEROS_SUBPHASES[currentSubPhaseIndex + 1]
         gameState.value.currentPlayerIndex = 0
+        // Play subphase transition sound
+        gameAudio.playSubPhaseSound()
       } else {
         // End of westeros phase
         nextPhase()
@@ -275,6 +280,8 @@ export const useGameState = () => {
       if (currentSubPhaseIndex < PLANNING_SUBPHASES.length - 1) {
         gameState.value.currentSubPhase = PLANNING_SUBPHASES[currentSubPhaseIndex + 1]
         gameState.value.currentPlayerIndex = 0
+        // Play subphase transition sound
+        gameAudio.playSubPhaseSound()
       } else {
         // End of planning phase
         nextPhase()
@@ -285,6 +292,8 @@ export const useGameState = () => {
       if (currentSubPhaseIndex < ACTION_SUBPHASES.length - 1) {
         gameState.value.currentSubPhase = ACTION_SUBPHASES[currentSubPhaseIndex + 1]
         gameState.value.currentPlayerIndex = 0
+        // Play subphase transition sound
+        gameAudio.playSubPhaseSound()
       } else {
         // End of action phase
         nextPhase()

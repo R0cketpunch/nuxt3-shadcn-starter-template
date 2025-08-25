@@ -429,14 +429,23 @@ const getCurrentPlayer = () => {
 
 const handleIronThroneReorder = (reorderedHouses: House[]) => {
   gameStateManager.setIronThroneOrder([...reorderedHouses]);
+  // Play influence track movement sound
+  const gameAudio = useGameAudio();
+  gameAudio.playInfluenceTrackSound();
 };
 
 const handleFiefdomsReorder = (reorderedHouses: House[]) => {
   gameStateManager.setFiefdomsOrder([...reorderedHouses]);
+  // Play influence track movement sound
+  const gameAudio = useGameAudio();
+  gameAudio.playInfluenceTrackSound();
 };
 
 const handleKingsCourtReorder = (reorderedHouses: House[]) => {
   gameStateManager.setKingsCourtOrder([...reorderedHouses]);
+  // Play influence track movement sound
+  const gameAudio = useGameAudio();
+  gameAudio.playInfluenceTrackSound();
 };
 
 const resetGame = () => {

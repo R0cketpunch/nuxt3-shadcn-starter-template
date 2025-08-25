@@ -176,12 +176,11 @@ export const useGameAudio = () => {
       halfway: "/sounds/timer-halfway.ogg",
       complete: "/sounds/timer-done.ogg",
     },
-    phase: {
-      westeros: "/sounds/phase.ogg",
-      planning: "/sounds/phase.ogg",
-      action: "/sounds/phase.ogg",
-      round: "/sounds/round.ogg",
-    },
+    phase: "/sounds/phase.ogg",
+    subphase: "/sounds/subphase.ogg",
+    round: "/sounds/round.ogg",
+    gameEnd: "/sounds/game-end.ogg",
+    influenceMove: "/sounds/influence-move.ogg",
   };
 
   // Play custom timer sound with fallback to generated tone
@@ -205,7 +204,14 @@ export const useGameAudio = () => {
   const playPhaseSound = async (
     phaseType: "westeros" | "planning" | "action" | "round"
   ) => {
-    const soundUrl = soundFiles.phase[phaseType];
+    let soundUrl: string;
+    
+    // Use specific round sound for round transitions, otherwise use phase sound
+    if (phaseType === "round") {
+      soundUrl = soundFiles.round;
+    } else {
+      soundUrl = soundFiles.phase;
+    }
 
     // Try to play custom sound file first
     if (typeof window !== "undefined") {
@@ -220,6 +226,59 @@ export const useGameAudio = () => {
     await playPhaseTransition(phaseType);
   };
 
+  // Play subphase sound
+  const playSubPhaseSound = async () => {
+    const soundUrl = soundFiles.subphase;
+
+    // Try to play custom sound file first
+    if (typeof window !== "undefined") {
+      const audioBuffer = await loadAudioFile(soundUrl);
+      if (audioBuffer) {
+        await playAudioFile(soundUrl, 0.5);
+        return;
+      }
+    }
+
+    // Fallback to generated tone
+    await playTone(600, 300, 0.4);
+  };
+
+  // Play game end sound
+  const playGameEndSound = async () => {
+    const soundUrl = soundFiles.gameEnd;
+
+    // Try to play custom sound file first
+    if (typeof window !== "undefined") {
+      const audioBuffer = await loadAudioFile(soundUrl);
+      if (audioBuffer) {
+        await playAudioFile(soundUrl, 0.7);
+        return;
+      }
+    }
+
+    // Fallback to generated tone sequence for game end
+    await playTone(300, 400, 0.5);
+    setTimeout(() => playTone(400, 400, 0.5), 300);
+    setTimeout(() => playTone(500, 600, 0.6), 600);
+  };
+
+  // Play influence track position change sound
+  const playInfluenceTrackSound = async () => {
+    const soundUrl = soundFiles.influenceMove;
+
+    // Try to play custom sound file first
+    if (typeof window !== "undefined") {
+      const audioBuffer = await loadAudioFile(soundUrl);
+      if (audioBuffer) {
+        await playAudioFile(soundUrl, 0.4);
+        return;
+      }
+    }
+
+    // Fallback to generated tone
+    await playTone(800, 150, 0.3);
+  };
+
   return {
     playAudioFile,
     playTone,
@@ -227,6 +286,9 @@ export const useGameAudio = () => {
     playPhaseTransition,
     playTimerSound,
     playPhaseSound,
+    playSubPhaseSound,
+    playGameEndSound,
+    playInfluenceTrackSound,
     loadAudioFile,
     ensureAudioReady,
   };

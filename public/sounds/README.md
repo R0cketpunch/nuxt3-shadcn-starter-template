@@ -1,19 +1,20 @@
 # Game Sounds
 
-This directory contains custom sound files for the Game of Thrones board game timer and phase transitions.
+This directory contains custom sound files for the Game of Thrones board game timer and transitions.
 
 ## Sound File Structure
 
 ### Timer Sounds
-- `timer-warning.mp3` - Plays when 60 seconds remain
-- `timer-urgent.mp3` - Plays when 30 seconds remain  
-- `timer-complete.mp3` - Plays when timer reaches zero
+- `timer-start.ogg` - Plays when timer starts
+- `timer-halfway.ogg` - Plays when timer reaches 50%
+- `timer-done.ogg` - Plays when timer completes
 
-### Phase Sounds
-- `westeros-theme.mp3` - Plays when entering Westeros phase
-- `planning-theme.mp3` - Plays when entering Planning phase
-- `action-theme.mp3` - Plays when entering Action phase
-- `new-round.mp3` - Plays when advancing to a new round
+### Game Event Sounds
+- `phase.ogg` - Plays when entering any phase (Westeros, Planning, Action)
+- `subphase.ogg` - Plays when advancing to next sub-phase
+- `round.ogg` - Plays when advancing to a new round
+- `game-end.ogg` - Plays when the game ends (after 10 rounds)
+- `influence-move.ogg` - Plays when influence track positions change
 
 ## Audio Format Requirements
 
