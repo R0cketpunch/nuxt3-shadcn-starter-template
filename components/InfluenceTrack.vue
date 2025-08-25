@@ -1,14 +1,5 @@
 <template>
   <div class="flex flex-col bg-background" v-auto-animate>
-    <!-- Track Title -->
-    <!-- <div class="p-4 text-center border-b">
-      <div class="flex gap-2 justify-center items-center">
-        <component :is="trackIcon" class="w-5 h-5" />
-        <h3 class="text-lg font-bold">{{ trackTitle }}</h3>
-      </div>
-      <div class="text-xs text-muted-foreground">{{ trackDescription }}</div>
-    </div> -->
-
     <!-- Houses in Order -->
     <div class="grid grid-cols-1 min-h-full bg-background" v-auto-animate>
       <div
@@ -31,7 +22,7 @@
       >
         <!-- Position Number -->
         <div
-          class="grid place-items-center h-full text-6xl font-bold text-white aspect-square"
+          class="grid relative place-items-center h-full text-6xl font-bold text-white aspect-square"
           :style="{
             backgroundColor: house.color + '20',
             color: house.color,
@@ -39,6 +30,12 @@
           v-auto-animate
         >
           <img :src="house.image" :alt="house.name" class="size-24" />
+          <img
+            v-if="dominanceToken && index === 0"
+            :src="dominanceToken.image"
+            :alt="dominanceToken.name"
+            class="absolute top-6 right-6 size-16"
+          />
           <!-- <div v-if="index === 0" class="flex items-center mt-2">
             <Crown v-if="trackType === 'iron-throne'" class="size-12" />
             <Sword v-else-if="trackType === 'fiefdoms'" class="size-12" />
@@ -48,7 +45,6 @@
 
           <NumberFlow v-else :value="index + 1" /> -->
         </div>
-
         <!-- House Info -->
         <div class="p-10">
           <div class="flex gap-8 items-center text-4xl font-bold">
@@ -72,41 +68,19 @@
         </div>
       </div>
     </div>
-
-    <!-- Track Benefits (if any) -->
-    <!-- <div
-      v-if="trackBenefits && trackBenefits.length > 0"
-      class="p-3 text-xs border-t bg-muted/30"
-    >
-      <div class="mb-1 font-medium text-muted-foreground">Track Benefits:</div>
-      <ul class="space-y-1">
-        <li v-for="benefit in trackBenefits" :key="benefit">• {{ benefit }}</li>
-      </ul>
-    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  Crown,
-  GripVertical,
-  Crown as Throne,
-  Gavel,
-  Bird,
-  Sword,
-  Star,
-} from "lucide-vue-next";
+import { Crown as Throne, Bird, Sword, Star } from "lucide-vue-next";
 import type { House } from "~/types/game";
+import { getInfluenceTrack, getTrackDominanceToken } from "~/types/game";
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
-import NumberFlow from "@number-flow/vue";
 
 interface Props {
   houses: House[];
-  trackTitle: string;
-  trackDescription: string;
   trackType: "iron-throne" | "fiefdoms" | "kings-court";
   allowReordering?: boolean;
-  trackBenefits?: string[];
   currentPlayerIndex?: number; // Index of currently active player (-1 or undefined means no highlighting)
   showCurrentPlayer?: boolean; // Whether to show current player highlighting
 }
@@ -118,14 +92,29 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+// Get influence track and dominance token data
+const influenceTrack = computed(() => getInfluenceTrack(props.trackType));
+const dominanceToken = computed(() => {
+  const track = influenceTrack.value;
+  return track ? getTrackDominanceToken(track) : undefined;
+});
+
 // Track-specific icons
 const trackIcons = {
   "iron-throne": Throne,
   fiefdoms: Sword,
-  "kings-court": Gavel,
+  "kings-court": Bird,
 };
 
 const trackIcon = computed(() => trackIcons[props.trackType]);
+
+// Computed properties for track information
+const trackTitle = computed(() => influenceTrack.value?.name || "");
+const trackDescription = computed(
+  () => influenceTrack.value?.description || ""
+);
+const trackBenefits = computed(() => influenceTrack.value?.benefits || []);
+const dominanceTokenName = computed(() => dominanceToken.value?.name || "");
 
 // Get player number for display
 const gameStateManager = useGameState();
@@ -144,19 +133,6 @@ const isCurrentPlayerTurn = (index: number) => {
 const setCurrentPlayer = () => {
   // We could emit an event for this, but for now it's just for styling
   // The parent component handles actual player switching
-};
-
-const getPositionTitle = (): string => {
-  switch (props.trackType) {
-    case "iron-throne":
-      return "Iron Throne Holder";
-    case "fiefdoms":
-      return "Valyrian Steel Blade";
-    case "kings-court":
-      return "Messenger Raven";
-    default:
-      return "";
-  }
 };
 
 const getStarCount = (index: number): number => {

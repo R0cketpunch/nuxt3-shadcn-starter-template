@@ -20,6 +20,29 @@ export interface SubPhase {
   icon?: string; // Lucide icon name
 }
 
+export interface InfluenceTrack {
+  id: "iron-throne" | "fiefdoms" | "kings-court";
+  name: string;
+  description: string;
+  icon: string; // Lucide icon name
+  image: string; // path to track image
+  dominanceTokenId: string; // ID of the dominance token awarded to #1 position
+  benefits: string[]; // List of benefits for track positions
+  specialRules?: string; // Any special rules for this track
+}
+
+export interface DominanceToken {
+  id: string;
+  name: string;
+  description: string;
+  icon: string; // Lucide icon name
+  image: string; // path to token image
+  trackId: "iron-throne" | "fiefdoms" | "kings-court"; // Which track awards this token
+  abilities: string[]; // List of abilities this token provides
+  usageType: "passive" | "once-per-round" | "active"; // How the token is used
+  specialRules?: string; // Any special rules for this token
+}
+
 export interface ActionSubPhase extends SubPhase {
   // Specific to Action phase subphases
 }
@@ -80,6 +103,101 @@ export const HOUSES: House[] = [
     name: "Martell",
     color: "#F97316",
     image: "/img/martell.png",
+  },
+];
+
+export const INFLUENCE_TRACKS: InfluenceTrack[] = [
+  {
+    id: "iron-throne",
+    name: "Iron Throne Track",
+    description: "Determines turn order for all game actions",
+    icon: "Crown",
+    image: "/img/iron-throne-track.png",
+    dominanceTokenId: "iron-throne-token",
+    benefits: [
+      "First in turn order for all game phases",
+      "Higher positions act before lower positions",
+    ],
+    specialRules:
+      "Turn order follows track positions from 1 to 6. Position determines who acts first in each phase.",
+  },
+  {
+    id: "fiefdoms",
+    name: "Fiefdoms Track",
+    description: "Determines combat tie resolution",
+    icon: "Sword",
+    image: "/img/fiefdoms-track.png",
+    dominanceTokenId: "valyrian-steel-blade",
+    benefits: [
+      "Higher positions win combat ties against lower positions",
+      "Combat strength ties resolved by track position",
+    ],
+    specialRules:
+      "Only position matters for combat ties - higher positions beat lower positions in tied combats.",
+  },
+  {
+    id: "kings-court",
+    name: "King's Court Track",
+    description: "Determines available special order tokens",
+    icon: "Bird",
+    image: "/img/kings-court-track.png",
+    dominanceTokenId: "messenger-raven",
+    benefits: [
+      "Position determines number of special order tokens available",
+      "Stars next to position show special order limit",
+    ],
+    specialRules:
+      "In 3-4 player games, overlay modifies the number of special orders available at each position.",
+  },
+];
+
+// The dominance tokens/artifacts awarded to #1 position
+export const DOMINANCE_TOKENS: DominanceToken[] = [
+  {
+    id: "iron-throne-token",
+    name: "Iron Throne Token",
+    description: "Grants tie-breaking authority",
+    icon: "Crown",
+    image: "/img/iron-throne.png",
+    trackId: "iron-throne",
+    abilities: [
+      "Decides outcome of all ties (except combat and game winner)",
+      "Controls bidding tie resolution",
+      "Resolves wildling attack ties",
+    ],
+    usageType: "passive", // always active
+    specialRules:
+      "Cannot resolve combat ties (Fiefdoms track) or game winner ties.",
+  },
+  {
+    id: "valyrian-steel-blade",
+    name: "Valyrian Steel Blade",
+    description: "Provides combat strength bonus",
+    icon: "Sword",
+    image: "/img/valyrian-steel-blade.png",
+    trackId: "fiefdoms",
+    abilities: [
+      "Grants +1 combat strength once per round",
+      "Can be used in any combat as attacker or defender",
+    ],
+    usageType: "once-per-round", // flip to faded side after use
+    specialRules:
+      "Flips to faded side when used, returns to available at end of Action Phase.",
+  },
+  {
+    id: "messenger-raven",
+    name: "Messenger Raven",
+    description: "Provides planning phase flexibility",
+    icon: "Bird",
+    image: "/img/messenger-raven.png",
+    trackId: "kings-court",
+    abilities: [
+      "Replace one order token on the board",
+      "Look at top wildling card and choose top/bottom placement",
+    ],
+    usageType: "once-per-round", // choose one ability per round
+    specialRules:
+      "Choose ONE ability at end of Reveal Orders step. Flips to faded side when used.",
   },
 ];
 
@@ -304,4 +422,30 @@ export const getStartingKingsCourtOrder = (playerCount: number): House[] => {
   return startingOrder
     .map((factionId) => HOUSES.find((house) => house.id === factionId))
     .filter(Boolean) as House[];
+};
+
+// Helper function to get influence track information
+export const getInfluenceTrack = (
+  trackId: "iron-throne" | "fiefdoms" | "kings-court"
+): InfluenceTrack | undefined => {
+  return INFLUENCE_TRACKS.find((track) => track.id === trackId);
+};
+
+// Helper functions for dominance token management
+export const getDominanceToken = (
+  tokenId: string
+): DominanceToken | undefined => {
+  return DOMINANCE_TOKENS.find((token) => token.id === tokenId);
+};
+
+export const getDominanceTokenByTrack = (
+  trackId: "iron-throne" | "fiefdoms" | "kings-court"
+): DominanceToken | undefined => {
+  return DOMINANCE_TOKENS.find((token) => token.trackId === trackId);
+};
+
+export const getTrackDominanceToken = (
+  track: InfluenceTrack
+): DominanceToken | undefined => {
+  return getDominanceToken(track.dominanceTokenId);
 };
