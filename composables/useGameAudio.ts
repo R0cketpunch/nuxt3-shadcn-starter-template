@@ -8,14 +8,14 @@ export const useGameAudio = () => {
         audioContext = new (window.AudioContext ||
           (window as any).webkitAudioContext)();
         console.log(`Audio context created, state: ${audioContext.state}`);
-        
+
         // Try to resume if suspended
-        if (audioContext.state === 'suspended') {
+        if (audioContext.state === "suspended") {
           await audioContext.resume();
           console.log(`Audio context resumed, state: ${audioContext.state}`);
         }
       } catch (error) {
-        console.warn('Failed to initialize audio context:', error);
+        console.warn("Failed to initialize audio context:", error);
       }
     }
   };
@@ -23,7 +23,7 @@ export const useGameAudio = () => {
   // Public function to ensure audio is ready (call on user interaction)
   const ensureAudioReady = async () => {
     await initAudioContext();
-    return audioContext?.state === 'running';
+    return audioContext?.state === "running";
   };
 
   // Load and cache audio files
@@ -46,7 +46,7 @@ export const useGameAudio = () => {
         console.warn(`Failed to fetch audio file: ${url} - ${response.status}`);
         return null;
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
@@ -69,8 +69,8 @@ export const useGameAudio = () => {
         return;
       }
 
-      if (audioContext.state === 'suspended') {
-        console.log('Audio context suspended, attempting to resume...');
+      if (audioContext.state === "suspended") {
+        console.log("Audio context suspended, attempting to resume...");
         await audioContext.resume();
       }
 
@@ -105,7 +105,7 @@ export const useGameAudio = () => {
       await initAudioContext();
       if (!audioContext) return;
 
-      if (audioContext.state === 'suspended') {
+      if (audioContext.state === "suspended") {
         await audioContext.resume();
       }
 
@@ -173,13 +173,13 @@ export const useGameAudio = () => {
   const soundFiles = {
     timer: {
       start: "/sounds/timer-start.ogg",
-      halfway: "/sounds/timer-halfway.ogg", 
+      halfway: "/sounds/timer-halfway.ogg",
       complete: "/sounds/timer-done.ogg",
     },
     phase: {
-      westeros: "/sounds/subphase.ogg",
-      planning: "/sounds/subphase.ogg",
-      action: "/sounds/subphase.ogg",
+      westeros: "/sounds/phase.ogg",
+      planning: "/sounds/phase.ogg",
+      action: "/sounds/phase.ogg",
       round: "/sounds/round.ogg",
     },
   };
