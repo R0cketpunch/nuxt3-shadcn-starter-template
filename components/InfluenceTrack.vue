@@ -38,6 +38,7 @@
           }"
           v-auto-animate
         >
+          <img src="/img/lannister.png" alt="Iron Throne" class="size-12" />
           <div v-if="index === 0" class="flex items-center mt-2">
             <Crown v-if="trackType === 'iron-throne'" class="size-12" />
             <Sword v-else-if="trackType === 'fiefdoms'" class="size-12" />

@@ -3,45 +3,14 @@ export const useGameTimer = () => {
   const isActive = ref(false);
   const isPaused = ref(false);
   const intervalId = ref<NodeJS.Timeout | null>(null);
-
-  let audioContext: AudioContext | null = null;
-
-  const initAudioContext = () => {
-    if (!audioContext && typeof window !== "undefined") {
-      audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-    }
-  };
-
-  const playAlert = (frequency: number = 800, duration: number = 200) => {
-    try {
-      initAudioContext();
-      if (!audioContext) return;
-
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.frequency.value = frequency;
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.01,
-        audioContext.currentTime + duration / 1000
-      );
-
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + duration / 1000);
-    } catch (error) {
-      console.warn("Audio alert failed:", error);
-    }
-  };
+  
+  const gameAudio = useGameAudio();
 
   const startTimer = (
     duration: number,
     shouldCountdown = true,
-    gameStartTime?: number
+    gameStartTime?: number,
+    skipStartSound = false
   ) => {
     if (intervalId.value) {
       clearInterval(intervalId.value);
@@ -61,20 +30,22 @@ export const useGameTimer = () => {
     isActive.value = true;
     isPaused.value = false;
 
+    // Play start sound when timer begins (unless skipped to prevent duplicates)
+    if (shouldCountdown && !skipStartSound) {
+      gameAudio.playTimerSound('start').catch(console.warn);
+    }
+
     intervalId.value = setInterval(() => {
       if (!isPaused.value) {
         if (shouldCountdown && timeRemaining.value > 0) {
           timeRemaining.value--;
 
-          // Audio alerts at 60 and 30 seconds
-          if (timeRemaining.value === 60) {
-            playAlert(600, 300); // Lower pitch, longer duration
-          } else if (timeRemaining.value === 30) {
-            playAlert(800, 200); // Higher pitch, shorter duration
-          } else if (timeRemaining.value === 10) {
-            playAlert(1000, 100); // Urgent beep
+          // Audio alerts at 50% and completion only
+          const halfDuration = Math.floor(duration / 2);
+          if (timeRemaining.value === halfDuration) {
+            gameAudio.playTimerSound('halfway').catch(console.warn);
           } else if (timeRemaining.value === 0) {
-            playAlert(400, 500); // Low completion tone
+            gameAudio.playTimerSound('complete').catch(console.warn);
             isActive.value = false;
           }
         } else if (!shouldCountdown && gameStartTime) {

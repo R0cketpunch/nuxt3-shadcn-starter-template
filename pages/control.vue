@@ -377,7 +377,16 @@ const handleSwipe = () => {
   }
 };
 
-const startAssignOrdersTimer = () => {
+const startAssignOrdersTimer = async () => {
+  // Ensure audio is ready when user starts timer
+  const gameAudio = useGameAudio()
+  try {
+    const ready = await gameAudio.ensureAudioReady()
+    console.log(`Audio ready on timer start: ${ready}`)
+  } catch (error) {
+    console.warn('Failed to initialize audio:', error)
+  }
+  
   realtimeSync.broadcastTimerAction("start", currentPhaseDuration.value);
 };
 

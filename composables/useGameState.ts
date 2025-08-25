@@ -15,6 +15,7 @@ const lastProcessedTimerAction: Record<string, number> = {
 
 export const useGameState = () => {
   const realtimeSync = useRealtimeSync()
+  const gameAudio = useGameAudio()
   const initialGameState: GameState = {
     currentRound: 1,
     currentPhase: GAME_PHASES[0], // Westeros phase
@@ -131,7 +132,14 @@ export const useGameState = () => {
         switch (action) {
           case 'start':
             if (duration) {
-              timer.startTimer(duration, true)
+              // Ensure audio is ready when timer starts
+              const gameAudio = useGameAudio()
+              gameAudio.ensureAudioReady().then(ready => {
+                console.log(`Audio ready: ${ready}`)
+              }).catch(console.warn)
+              
+              // Skip start sound here since it's already played by the initiating device
+              timer.startTimer(duration, true, undefined, true)
             }
             break
           case 'pause':
@@ -202,6 +210,8 @@ export const useGameState = () => {
   }
   
   const nextPhase = () => {
+    const wasRoundAdvance = gameState.value.currentPhase.id === 'action' && gameState.value.currentRound < MAX_ROUNDS
+    
     if (gameState.value.currentPhase.id === 'action') {
       // End of round, advance to next round
       if (gameState.value.currentRound < MAX_ROUNDS) {
@@ -209,16 +219,28 @@ export const useGameState = () => {
         gameState.value.currentPhase = GAME_PHASES[0] // Back to Westeros
         gameState.value.currentSubPhase = gameState.value.currentRound === 1 ? undefined : WESTEROS_SUBPHASES[0]
         gameState.value.currentPlayerIndex = 0
+        // Play round transition sound
+        gameAudio.playPhaseSound('round')
       }
     } else if (gameState.value.currentPhase.id === 'westeros') {
       gameState.value.currentPhase = GAME_PHASES[1] // Planning
       gameState.value.currentSubPhase = PLANNING_SUBPHASES[0] // Assign Orders
       gameState.value.currentPlayerIndex = 0
+      // Play planning phase sound
+      gameAudio.playPhaseSound('planning')
     } else if (gameState.value.currentPhase.id === 'planning') {
       gameState.value.currentPhase = GAME_PHASES[2] // Action
       gameState.value.currentSubPhase = ACTION_SUBPHASES[0] // Raid Orders
       gameState.value.currentPlayerIndex = 0
+      // Play action phase sound
+      gameAudio.playPhaseSound('action')
     }
+    
+    // Play westeros sound if we just advanced to a new round
+    if (wasRoundAdvance && gameState.value.currentPhase.id === 'westeros') {
+      setTimeout(() => gameAudio.playPhaseSound('westeros'), 1000) // Delay to not overlap with round sound
+    }
+    
     broadcastStateChange()
   }
   
