@@ -63,6 +63,7 @@ export interface GameState {
   ironThroneOrder: House[]; // ordered array, index 0 = Iron Throne holder
   fiefdomsOrder: House[]; // ordered array, index 0 = Fiefdoms track leader
   kingsCourtOrder: House[]; // ordered array, index 0 = King's Court track leader
+  wildlingThreat: number; // Position on wildling track (0-12)
   timeRemaining: number; // seconds
   isPaused: boolean;
   isTimerActive: boolean;
@@ -448,4 +449,15 @@ export const getTrackDominanceToken = (
   track: InfluenceTrack
 ): DominanceToken | undefined => {
   return getDominanceToken(track.dominanceTokenId);
+};
+
+// Wildling Threat constants
+export const STARTING_WILDLING_THREAT = 2; // Wildling track starts at position 2
+export const MIN_WILDLING_THREAT = 0; // Minimum after successful defense
+export const MAX_WILDLING_THREAT = 12; // Triggers automatic wildling attack
+export const WILDLING_WIN_REDUCTION = 2; // Moves back 2 positions when wildlings win
+
+// Validation functions
+export const isValidWildlingThreat = (threat: number): boolean => {
+  return threat >= MIN_WILDLING_THREAT && threat <= MAX_WILDLING_THREAT;
 };

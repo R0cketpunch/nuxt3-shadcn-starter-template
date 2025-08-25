@@ -242,6 +242,75 @@
             </div>
           </div>
         </div>
+
+        <!-- Wildling Controls (always available) -->
+        <div class="flex flex-col">
+          <!-- Wildling Threat Display -->
+          <div class="flex justify-center items-center p-4 bg-card border-b">
+            <div class="text-center">
+              <div class="text-sm text-muted-foreground mb-1">Wildling Threat</div>
+              <div class="flex items-center justify-center space-x-2">
+                <div class="text-3xl font-bold" :class="wildlingThreatColor">
+                  {{ gameState.wildlingThreat }}
+                </div>
+                <div class="text-lg text-muted-foreground">/12</div>
+              </div>
+              <div v-if="gameState.wildlingThreat >= 12" class="text-sm text-red-600 font-bold mt-1">
+                ATTACK TRIGGERED!
+              </div>
+              <div v-else-if="gameState.wildlingThreat >= 10" class="text-sm text-orange-500 font-medium mt-1">
+                Attack imminent!
+              </div>
+            </div>
+          </div>
+
+          <!-- Wildling Controls -->
+          <div class="grid grid-cols-4 gap-px bg-muted">
+            <!-- Advance Threat -->
+            <div
+              @click="advanceWildlingThreat(1)"
+              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+            >
+              <div class="text-center">
+                <div class="text-lg">+1</div>
+                <div class="text-xs">Advance</div>
+              </div>
+            </div>
+            
+            <!-- Advance by 2 -->
+            <div
+              @click="advanceWildlingThreat(2)"
+              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+            >
+              <div class="text-center">
+                <div class="text-lg">+2</div>
+                <div class="text-xs">Advance</div>
+              </div>
+            </div>
+
+            <!-- Reset (Defense Success) -->
+            <div
+              @click="resetWildlingThreat"
+              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+            >
+              <div class="text-center">
+                <div class="text-lg">0</div>
+                <div class="text-xs">Defense</div>
+              </div>
+            </div>
+
+            <!-- Wildling Win -->
+            <div
+              @click="wildlingWinReduction"
+              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+            >
+              <div class="text-center">
+                <div class="text-lg">-2</div>
+                <div class="text-xs">W. Win</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="grid sticky right-0 bottom-0 left-0 grid-cols-4 items-center">
         <div
@@ -486,5 +555,35 @@ const handleImportFile = (event: Event) => {
     }
   };
   reader.readAsText(file);
+};
+
+// Wildling threat color coding
+const wildlingThreatColor = computed(() => {
+  const threat = gameState.value.wildlingThreat;
+  if (threat >= 12) return "text-red-600";
+  if (threat >= 10) return "text-red-500";
+  if (threat >= 7) return "text-orange-500";
+  if (threat >= 4) return "text-yellow-500";
+  return "text-green-600";
+});
+
+// Wildling control functions
+const advanceWildlingThreat = (amount: number) => {
+  const attackTriggered = gameStateManager.advanceWildlingThreat(amount);
+  if (attackTriggered) {
+    alert("Wildling Attack triggered! The threat has reached 12.");
+  }
+};
+
+const resetWildlingThreat = () => {
+  if (confirm("Reset wildling threat to 0 (successful defense)?")) {
+    gameStateManager.resetWildlingThreat();
+  }
+};
+
+const wildlingWinReduction = () => {
+  if (confirm("Wildlings won the attack? This will reduce threat by 2.")) {
+    gameStateManager.wildlingWinReduction();
+  }
 };
 </script>

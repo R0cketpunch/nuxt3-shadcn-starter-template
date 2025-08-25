@@ -9,13 +9,23 @@
         </span>
       </div>
     </div>
-    <div class="flex flex-col col-span-1 justify-center items-start p-10 text-white bg-muted">
-      <div class="text-4xl font-semibold">{{ gameState.currentPhase.name }}</div>
-      <div v-if="gameState.currentSubPhase" class="text-xl text-muted-foreground">
-        {{ gameState.currentSubPhase.name }}
+    <!-- Wildling Threat Display -->
+    <div
+      class="flex flex-col items-center p-4 border-b"
+      :class="wildlingThreatColor"
+    >
+      <div class="mb-1 text-sm text-muted-foreground">Wildling Threat</div>
+      <div class="flex items-center space-x-2">
+        <div class="text-2xl font-bold">
+          {{ gameState.wildlingThreat }}
+        </div>
+        <div class="text-sm text-muted-foreground">/12</div>
       </div>
-      <div v-if="currentPlayer" class="text-sm text-muted-foreground mt-2">
-        Current: {{ currentPlayer.name }}
+      <div
+        v-if="gameState.wildlingThreat >= 10"
+        class="mt-1 text-xs font-medium text-red-600"
+      >
+        Attack imminent!
       </div>
     </div>
   </div>
@@ -25,7 +35,8 @@
 import { MAX_ROUNDS } from "~/types/game";
 import type { GameState, House } from "~/types/game";
 import NumberFlow from "@number-flow/vue";
-
+const gameStateManager = useGameState();
+const gameState = gameStateManager.gameState;
 interface Props {
   gameState: GameState;
 }
@@ -37,5 +48,13 @@ const maxRounds = MAX_ROUNDS;
 const currentPlayer = computed(() => {
   const gameStateManager = useGameState();
   return gameStateManager.getCurrentPlayer();
+});
+
+const wildlingThreatColor = computed(() => {
+  const threat = gameState.value.wildlingThreat;
+  if (threat >= 10) return "bg-red-600";
+  if (threat >= 7) return "bg-orange-500";
+  if (threat >= 4) return "bg-yellow-500";
+  return "";
 });
 </script>

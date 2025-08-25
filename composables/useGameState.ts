@@ -1,5 +1,5 @@
 import type { GameState, House, GameSettings, SubPhase } from '~/types/game'
-import { GAME_PHASES, WESTEROS_SUBPHASES, PLANNING_SUBPHASES, ACTION_SUBPHASES, MAX_ROUNDS, getStartingIronThroneOrder, getStartingFiefdomsOrder, getStartingKingsCourtOrder } from '~/types/game'
+import { GAME_PHASES, WESTEROS_SUBPHASES, PLANNING_SUBPHASES, ACTION_SUBPHASES, MAX_ROUNDS, getStartingIronThroneOrder, getStartingFiefdomsOrder, getStartingKingsCourtOrder, STARTING_WILDLING_THREAT } from '~/types/game'
 
 const STORAGE_KEY = 'agot-gm-game-state'
 const SETTINGS_KEY = 'agot-gm-settings'
@@ -24,6 +24,7 @@ export const useGameState = () => {
     ironThroneOrder: [],
     fiefdomsOrder: [],
     kingsCourtOrder: [],
+    wildlingThreat: STARTING_WILDLING_THREAT,
     timeRemaining: 0,
     isPaused: false,
     isTimerActive: false
@@ -200,6 +201,7 @@ export const useGameState = () => {
       ironThroneOrder,
       fiefdomsOrder,
       kingsCourtOrder,
+      wildlingThreat: STARTING_WILDLING_THREAT,
       currentPhase: GAME_PHASES[1], // Start with Planning phase in round 1 (Westeros is skipped)
       currentSubPhase: PLANNING_SUBPHASES[0], // Start with Assign Orders
       gameStartTime: Date.now() // Save timestamp when game starts
@@ -463,6 +465,31 @@ export const useGameState = () => {
         break
     }
   }
+
+  const updateWildlingThreat = (threatLevel: number) => {
+    gameState.value.wildlingThreat = Math.max(0, Math.min(12, threatLevel))
+    broadcastStateChange()
+  }
+
+  const advanceWildlingThreat = (amount: number = 1) => {
+    const newThreat = gameState.value.wildlingThreat + amount
+    updateWildlingThreat(newThreat)
+    
+    // Check if wildling attack is triggered
+    if (gameState.value.wildlingThreat >= 12) {
+      return true // Indicates wildling attack should be triggered
+    }
+    return false
+  }
+
+  const resetWildlingThreat = () => {
+    updateWildlingThreat(0)
+  }
+
+  const wildlingWinReduction = () => {
+    const newThreat = gameState.value.wildlingThreat - 2
+    updateWildlingThreat(newThreat)
+  }
   
   // Initialize on mount
   onMounted(() => {
@@ -502,6 +529,10 @@ export const useGameState = () => {
     saveGameState,
     updateSettings,
     getNextAction,
-    continueGame
+    continueGame,
+    updateWildlingThreat,
+    advanceWildlingThreat,
+    resetWildlingThreat,
+    wildlingWinReduction
   }
 }
