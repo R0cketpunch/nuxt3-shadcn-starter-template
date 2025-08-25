@@ -248,17 +248,25 @@
           <!-- Wildling Threat Display -->
           <div class="flex justify-center items-center p-4 bg-card border-b">
             <div class="text-center">
-              <div class="text-sm text-muted-foreground mb-1">Wildling Threat</div>
+              <div class="text-sm text-muted-foreground mb-1">
+                Wildling Threat
+              </div>
               <div class="flex items-center justify-center space-x-2">
                 <div class="text-3xl font-bold" :class="wildlingThreatColor">
                   {{ gameState.wildlingThreat }}
                 </div>
                 <div class="text-lg text-muted-foreground">/12</div>
               </div>
-              <div v-if="gameState.wildlingThreat >= 12" class="text-sm text-red-600 font-bold mt-1">
+              <div
+                v-if="gameState.wildlingThreat >= 12"
+                class="text-sm text-red-600 font-bold mt-1"
+              >
                 ATTACK TRIGGERED!
               </div>
-              <div v-else-if="gameState.wildlingThreat >= 10" class="text-sm text-orange-500 font-medium mt-1">
+              <div
+                v-else-if="gameState.wildlingThreat >= 10"
+                class="text-sm text-orange-500 font-medium mt-1"
+              >
                 Attack imminent!
               </div>
             </div>
@@ -276,7 +284,7 @@
                 <div class="text-xs">Advance</div>
               </div>
             </div>
-            
+
             <!-- Advance by 2 -->
             <div
               @click="advanceWildlingThreat(2)"
@@ -449,14 +457,14 @@ const handleSwipe = () => {
 
 const startAssignOrdersTimer = async () => {
   // Ensure audio is ready when user starts timer
-  const gameAudio = useGameAudio()
+  const gameAudio = useGameAudio();
   try {
-    const ready = await gameAudio.ensureAudioReady()
-    console.log(`Audio ready on timer start: ${ready}`)
+    const ready = await gameAudio.ensureAudioReady();
+    console.log(`Audio ready on timer start: ${ready}`);
   } catch (error) {
-    console.warn('Failed to initialize audio:', error)
+    console.warn("Failed to initialize audio:", error);
   }
-  
+
   realtimeSync.broadcastTimerAction("start", assignOrdersDuration.value);
 };
 
@@ -498,23 +506,14 @@ const getCurrentPlayer = () => {
 
 const handleIronThroneReorder = (reorderedHouses: House[]) => {
   gameStateManager.setIronThroneOrder([...reorderedHouses]);
-  // Play influence track movement sound
-  const gameAudio = useGameAudio();
-  gameAudio.playInfluenceTrackSound();
 };
 
 const handleFiefdomsReorder = (reorderedHouses: House[]) => {
   gameStateManager.setFiefdomsOrder([...reorderedHouses]);
-  // Play influence track movement sound
-  const gameAudio = useGameAudio();
-  gameAudio.playInfluenceTrackSound();
 };
 
 const handleKingsCourtReorder = (reorderedHouses: House[]) => {
   gameStateManager.setKingsCourtOrder([...reorderedHouses]);
-  // Play influence track movement sound
-  const gameAudio = useGameAudio();
-  gameAudio.playInfluenceTrackSound();
 };
 
 const resetGame = () => {

@@ -181,6 +181,7 @@ export const useGameAudio = () => {
     round: "/sounds/round.ogg",
     gameEnd: "/sounds/game-end.ogg",
     influenceMove: "/sounds/influence-move.ogg",
+    wildlingAttack: "/sounds/wildling-attack.ogg",
   };
 
   // Play custom timer sound with fallback to generated tone
@@ -205,7 +206,7 @@ export const useGameAudio = () => {
     phaseType: "westeros" | "planning" | "action" | "round"
   ) => {
     let soundUrl: string;
-    
+
     // Use specific round sound for round transitions, otherwise use phase sound
     if (phaseType === "round") {
       soundUrl = soundFiles.round;

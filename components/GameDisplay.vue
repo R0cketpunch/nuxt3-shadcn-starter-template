@@ -2,7 +2,7 @@
   <div class="grid grid-cols-3">
     <div class="col-span-2 p-10">
       <div class="text-6xl">
-        <NumberFlow :value="gameState.currentRound" />
+        <NumberFlow :value="props.gameState.currentRound" />
         <span class="text-muted-foreground">
           of
           <NumberFlow :value="maxRounds" />
@@ -17,12 +17,12 @@
       <div class="mb-1 text-sm text-muted-foreground">Wildling Threat</div>
       <div class="flex items-center space-x-2">
         <div class="text-2xl font-bold">
-          {{ gameState.wildlingThreat }}
+          {{ props.gameState.wildlingThreat }}
         </div>
         <div class="text-sm text-muted-foreground">/12</div>
       </div>
       <div
-        v-if="gameState.wildlingThreat >= 10"
+        v-if="props.gameState.wildlingThreat >= 10"
         class="mt-1 text-xs font-medium text-red-600"
       >
         Attack imminent!
@@ -35,8 +35,7 @@
 import { MAX_ROUNDS } from "~/types/game";
 import type { GameState, House } from "~/types/game";
 import NumberFlow from "@number-flow/vue";
-const gameStateManager = useGameState();
-const gameState = gameStateManager.gameState;
+
 interface Props {
   gameState: GameState;
 }
@@ -51,7 +50,7 @@ const currentPlayer = computed(() => {
 });
 
 const wildlingThreatColor = computed(() => {
-  const threat = gameState.value.wildlingThreat;
+  const threat = props.gameState.wildlingThreat;
   if (threat >= 10) return "bg-red-600";
   if (threat >= 7) return "bg-orange-500";
   if (threat >= 4) return "bg-yellow-500";

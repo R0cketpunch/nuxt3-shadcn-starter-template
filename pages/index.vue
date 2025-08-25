@@ -48,7 +48,7 @@
         </div>
       </header> -->
       <!-- Main Game Dashboard -->
-      <GameDisplay :game-state="gameState" />
+      <GameDisplay :game-state="gameStateForComponents" />
       <!-- Phase Indicator -->
       <PhaseIndicator
         :current-round="gameState.currentRound"
@@ -123,9 +123,28 @@
 
 <script setup lang="ts">
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
+import type { GameState } from "~/types/game";
 
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
+
+// Create a computed property that provides the correct type for components
+const gameStateForComponents = computed(
+  (): GameState => ({
+    currentRound: gameState.value.currentRound,
+    currentPhase: gameState.value.currentPhase,
+    currentSubPhase: gameState.value.currentSubPhase,
+    currentPlayerIndex: gameState.value.currentPlayerIndex,
+    ironThroneOrder: [...gameState.value.ironThroneOrder],
+    fiefdomsOrder: [...gameState.value.fiefdomsOrder],
+    kingsCourtOrder: [...gameState.value.kingsCourtOrder],
+    wildlingThreat: gameState.value.wildlingThreat,
+    timeRemaining: gameState.value.timeRemaining,
+    isPaused: gameState.value.isPaused,
+    isTimerActive: gameState.value.isTimerActive,
+    gameStartTime: gameState.value.gameStartTime,
+  })
+);
 
 const announcementModal = ref<{
   show: (title: string, subtitle?: string) => void;
