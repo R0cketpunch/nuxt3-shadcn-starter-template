@@ -1,9 +1,31 @@
 <template>
+  <div class="grid grid-cols-3">
+    <div class="flex col-span-2 items-center px-8 h-32">
+      <div class="text-6xl">
+        <NumberFlow :value="gameState.currentRound" />
+        <span class="text-2xl text-muted-foreground">
+          of
+          <NumberFlow :value="maxRounds" />
+        </span>
+      </div>
+    </div>
+    <!-- Wildling Threat Display -->
+    <div class="flex items-center px-8 h-32" :class="wildlingThreatColor">
+      <!-- <Skull class="size-10" /> -->
+      <div class="text-6xl">
+        <NumberFlow :value="gameState.wildlingThreat" />
+        <span class="text-2xl text-muted-foreground">
+          of
+          <NumberFlow :value="12" />
+        </span>
+      </div>
+    </div>
+  </div>
   <div class="grid grid-cols-3 gap-px bg-muted">
     <div
       v-for="(phase, index) in allPhases"
       :key="phase.id"
-      class="flex flex-col justify-between p-8"
+      class="flex flex-col gap-4 justify-between p-8 h-32"
       :class="{
         'bg-muted text-white': isCurrentPhase(index),
         'bg-background text-border line-through': isPhaseComplete(index),
@@ -19,7 +41,7 @@
     <div
       v-for="(subPhase, index) in currentPhaseSubPhases"
       :key="`sub-${subPhase.id}`"
-      class="flex flex-col justify-between p-8"
+      class="flex flex-col gap-4 justify-between p-8 h-32"
       :class="{
         'bg-muted text-white': isCurrentSubPhase(subPhase),
         'bg-background text-border line-through': isSubPhaseComplete(index),
@@ -30,6 +52,7 @@
       <div class="relative">
         <component :is="getSubPhaseIconComponent(subPhase)" class="size-6" />
       </div>
+      <!-- <img :src="subPhase.image" :alt="subPhase.name" class="size-16" /> -->
 
       <div class="text-xl">
         {{ subPhase.name }}
@@ -62,17 +85,18 @@ import {
   Crown,
   Brain,
   Swords,
-  CircleCheck,
+  Captions,
   PenTool,
   Eye,
   Bird,
   Zap,
-  ArrowRight,
+  Sword,
   Shield,
   Circle,
-  Ghost,
+  Skull,
   Dices,
   Drama,
+  Flame,
 } from "lucide-vue-next";
 import type { GamePhase, SubPhase } from "~/types/game";
 import {
@@ -87,11 +111,7 @@ import {
 import NumberFlow from "@number-flow/vue";
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
 
-interface Props {
-  currentRound: number;
-  currentPhase: GamePhase;
-  currentSubPhase?: SubPhase;
-}
+// Props removed - using useGameState() directly
 
 interface Emits {
   (e: "advance-phase"): void;
@@ -99,8 +119,10 @@ interface Emits {
   (e: "next-player"): void;
 }
 
-const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+const gameStateManager = useGameState();
+const gameState = gameStateManager.gameState;
 
 const maxRounds = MAX_ROUNDS;
 const allPhases = GAME_PHASES;
@@ -111,42 +133,43 @@ const iconComponents = {
   Brain,
   Swords,
   Dices,
-  Ghost,
-  CircleCheck,
+  Skull,
+  Captions,
   PenTool,
   Eye,
   Bird,
   Zap,
-  ArrowRight,
+  Sword,
   Shield,
   Circle,
   Drama,
+  Flame,
 } as const;
 
 const currentPhaseIndex = computed(() => {
-  return GAME_PHASES.findIndex((p) => p.id === props.currentPhase.id);
+  return GAME_PHASES.findIndex((p) => p.id === gameState.value.currentPhase.id);
 });
 
 const nextPhase = computed(() => {
-  if (props.currentPhase.id === "action") {
-    return props.currentRound < MAX_ROUNDS ? GAME_PHASES[0] : null; // Back to Westeros or end
+  if (gameState.value.currentPhase.id === "action") {
+    return gameState.value.currentRound < MAX_ROUNDS ? GAME_PHASES[0] : null; // Back to Westeros or end
   }
   const nextIndex = currentPhaseIndex.value + 1;
   return nextIndex < GAME_PHASES.length ? GAME_PHASES[nextIndex] : null;
 });
 
 const nextRound = computed(() => {
-  return props.currentPhase.id === "action"
-    ? props.currentRound + 1
-    : props.currentRound;
+  return gameState.value.currentPhase.id === "action"
+    ? gameState.value.currentRound + 1
+    : gameState.value.currentRound;
 });
 
 const isLastPhaseOfRound = computed(() => {
-  return props.currentPhase.id === "action";
+  return gameState.value.currentPhase.id === "action";
 });
 
 const isGameComplete = computed(() => {
-  return props.currentRound > MAX_ROUNDS;
+  return gameState.value.currentRound > MAX_ROUNDS;
 });
 
 const isPhaseComplete = (index: number) => {
@@ -184,22 +207,22 @@ const getSubPhasesForPhase = (phaseId: string) => {
 };
 
 const currentPhaseSubPhases = computed(() => {
-  return getSubPhasesForPhase(props.currentPhase.id);
+  return getSubPhasesForPhase(gameState.value.currentPhase.id);
 });
 
 const currentSubPhaseIndex = computed(() => {
-  if (!props.currentSubPhase) return -1;
+  if (!gameState.value.currentSubPhase) return -1;
   return currentPhaseSubPhases.value.findIndex(
-    (sp) => sp.id === props.currentSubPhase!.id
+    (sp) => sp.id === gameState.value.currentSubPhase!.id
   );
 });
 
 const isCurrentSubPhase = (subPhase: SubPhase) => {
-  return props.currentSubPhase?.id === subPhase.id;
+  return gameState.value.currentSubPhase?.id === subPhase.id;
 };
 
 const isSubPhaseComplete = (index: number) => {
-  if (!props.currentSubPhase) return false;
+  if (!gameState.value.currentSubPhase) return false;
   return index < currentSubPhaseIndex.value;
 };
 
@@ -210,7 +233,18 @@ const getPhaseIconComponent = (phaseId: string) => {
 };
 
 const getSubPhaseIconComponent = (subPhase: SubPhase) => {
-  const iconName = getSubPhaseIcon(props.currentPhase.id, subPhase.id);
+  const iconName = getSubPhaseIcon(
+    gameState.value.currentPhase.id,
+    subPhase.id
+  );
   return iconComponents[iconName as keyof typeof iconComponents] || Circle;
 };
+
+const wildlingThreatColor = computed(() => {
+  const threat = gameState.value.wildlingThreat;
+  if (threat >= 10) return "bg-red-600";
+  if (threat >= 7) return "bg-orange-500";
+  if (threat >= 4) return "bg-yellow-500";
+  return "";
+});
 </script>

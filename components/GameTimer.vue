@@ -1,10 +1,10 @@
 <template>
   <div
     v-if="shouldCountdown"
-    class="grid grid-cols-3 gap-px items-center bg-muted"
+    class="grid grid-cols-3 gap-px items-center h-32 bg-muted"
   >
     <!-- Timer Display -->
-    <div class="p-10 bg-background aspect-[16/6] flex flex-col justify-center">
+    <div class="flex flex-col justify-center px-10 h-full bg-background">
       <NumberFlowGroup>
         <div class="text-6xl" :class="timer.getTimerColor()">
           <NumberFlow
@@ -170,7 +170,7 @@ watch(
       // The control page will handle starting the timer manually
       timer.resetTimer(props.duration, true, props.gameStartTime);
     } else {
-      // Start total game time tracking when not in countdown mode  
+      // Start total game time tracking when not in countdown mode
       timer.startTimer(props.duration, false, props.gameStartTime);
     }
   },

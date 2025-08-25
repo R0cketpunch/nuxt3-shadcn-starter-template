@@ -32,21 +32,21 @@
           }"
           v-auto-animate
         >
-          <img :src="house.image" :alt="house.name" class="size-24" />
+          <!-- <img :src="house.image" :alt="house.name" class="size-24" />
           <img
             v-if="dominanceToken && index === 0"
             :src="dominanceToken.image"
             :alt="dominanceToken.name"
             class="absolute top-6 right-6 size-16"
-          />
-          <!-- <div v-if="index === 0" class="flex items-center mt-2">
+          /> -->
+          <div v-if="index === 0" class="flex items-center mt-2">
             <Crown v-if="trackType === 'iron-throne'" class="size-12" />
             <Sword v-else-if="trackType === 'fiefdoms'" class="size-12" />
             <Bird v-else-if="trackType === 'kings-court'" class="size-12" />
             <span v-if="index === 0" class="text-sm font-medium"> </span>
           </div>
 
-          <NumberFlow v-else :value="index + 1" /> -->
+          <NumberFlow v-else :value="index + 1" />
         </div>
         <!-- House Info -->
         <div class="p-10">
@@ -75,10 +75,11 @@
 </template>
 
 <script setup lang="ts">
-import { Crown as Throne, Bird, Sword, Star } from "lucide-vue-next";
+import { Crown as Throne, Bird, Sword, Star, Crown } from "lucide-vue-next";
 import type { House } from "~/types/game";
 import { getInfluenceTrack, getTrackDominanceToken } from "~/types/game";
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
+import NumberFlow from "@number-flow/vue";
 
 interface Props {
   houses: House[];

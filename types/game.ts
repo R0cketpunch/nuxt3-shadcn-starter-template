@@ -18,6 +18,7 @@ export interface SubPhase {
   name: string;
   requiresTurnOrder: boolean; // Whether this sub-phase uses Iron Throne track order
   icon?: string; // Lucide icon name
+  image?: string; // path to subphase image
 }
 
 export interface InfluenceTrack {
@@ -229,18 +230,21 @@ export const WESTEROS_SUBPHASES: WesterosSubPhase[] = [
     name: "Draw Westeros Cards",
     requiresTurnOrder: false,
     icon: "Dices",
+    image: "/img/subphase/draw-cards.png",
   },
   {
     id: "advance-wildlings",
     name: "Advance Wildlings Track",
     requiresTurnOrder: false,
-    icon: "Ghost",
+    icon: "Skull",
+    image: "/img/subphase/advance-wildlings.png",
   },
   {
     id: "resolve-cards",
     name: "Resolve Westeros Cards",
     requiresTurnOrder: false,
-    icon: "CircleCheck",
+    icon: "Captions",
+    image: "/img/subphase/resolve-cards.png",
   },
 ];
 
@@ -250,18 +254,21 @@ export const PLANNING_SUBPHASES: PlanningSubPhase[] = [
     name: "Assign Orders",
     requiresTurnOrder: false,
     icon: "PenTool",
+    image: "/img/subphase/assign-orders.png",
   },
   {
     id: "reveal-orders",
     name: "Reveal Orders",
     requiresTurnOrder: false,
     icon: "Eye",
+    image: "/img/subphase/reveal-orders.png",
   },
   {
     id: "messenger-raven",
     name: "Use Messenger Raven",
     requiresTurnOrder: false,
     icon: "Bird",
+    image: "/img/subphase/messenger-raven.png",
   },
 ];
 
@@ -270,19 +277,22 @@ export const ACTION_SUBPHASES: ActionSubPhase[] = [
     id: "raid",
     name: "Raid Orders",
     requiresTurnOrder: true,
-    icon: "Zap",
+    icon: "Flame",
+    image: "/img/subphase/raid.png",
   },
   {
     id: "march",
     name: "March Orders",
     requiresTurnOrder: true,
-    icon: "ArrowRight",
+    icon: "Sword",
+    image: "/img/subphase/march.png",
   },
   {
     id: "consolidate",
     name: "Consolidate Power Orders",
     requiresTurnOrder: true,
     icon: "Crown",
+    image: "/img/subphase/consolidate.png",
   },
 ];
 
