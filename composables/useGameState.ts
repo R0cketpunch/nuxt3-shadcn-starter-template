@@ -207,6 +207,11 @@ export const useGameState = () => {
     
     // Explicitly broadcast the new game state
     broadcastStateChange()
+    
+    // Auto-start the Assign Orders timer when game initializes
+    setTimeout(() => {
+      realtimeSync.broadcastTimerAction('start', settings.value.assignOrdersDuration)
+    }, 1000) // Delay to ensure game state is fully set up
   }
   
   const nextPhase = () => {
@@ -228,6 +233,13 @@ export const useGameState = () => {
       gameState.value.currentPlayerIndex = 0
       // Play planning phase sound
       gameAudio.playPhaseSound('planning')
+      
+      // Auto-start the Assign Orders timer
+      if (gameState.value.currentSubPhase.id === 'assign-orders') {
+        setTimeout(() => {
+          realtimeSync.broadcastTimerAction('start', settings.value.assignOrdersDuration)
+        }, 500) // Small delay to ensure phase transition is complete
+      }
     } else if (gameState.value.currentPhase.id === 'planning') {
       gameState.value.currentPhase = GAME_PHASES[2] // Action
       gameState.value.currentSubPhase = ACTION_SUBPHASES[0] // Raid Orders
