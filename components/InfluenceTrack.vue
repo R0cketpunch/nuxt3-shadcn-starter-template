@@ -1,7 +1,10 @@
 <template>
   <div class="flex flex-col bg-background" v-auto-animate>
     <!-- Houses in Order -->
-    <div class="grid grid-cols-1 min-h-full bg-background" v-auto-animate>
+    <div
+      class="grid grid-cols-1 min-h-full divide-y bg-background"
+      v-auto-animate
+    >
       <div
         v-for="(house, index) in houses"
         :key="house.id"
