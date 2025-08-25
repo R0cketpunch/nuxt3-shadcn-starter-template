@@ -2,6 +2,7 @@ export interface House {
   id: string;
   name: string; // 'Stark', 'Lannister', 'Baratheon', 'Greyjoy', 'Tyrell', 'Martell'
   color: string; // hex color for UI
+  image: string; // path to house sigil image
   playerName?: string; // Player's name, defaults to "Player X" if not provided
 }
 
@@ -55,12 +56,32 @@ export interface GameSettings {
 
 // Game constants
 export const HOUSES: House[] = [
-  { id: "stark", name: "Stark", color: "#6B7280" },
-  { id: "lannister", name: "Lannister", color: "#DC2626" },
-  { id: "baratheon", name: "Baratheon", color: "#FBBF24" },
-  { id: "greyjoy", name: "Greyjoy", color: "#1F2937" },
-  { id: "tyrell", name: "Tyrell", color: "#10B981" },
-  { id: "martell", name: "Martell", color: "#F97316" },
+  { id: "stark", name: "Stark", color: "#6B7280", image: "/img/stark.png" },
+  {
+    id: "lannister",
+    name: "Lannister",
+    color: "#DC2626",
+    image: "/img/lannister.png",
+  },
+  {
+    id: "baratheon",
+    name: "Baratheon",
+    color: "#FBBF24",
+    image: "/img/baratheon.png",
+  },
+  {
+    id: "greyjoy",
+    name: "Greyjoy",
+    color: "#1F2937",
+    image: "/img/greyjoy.png",
+  },
+  { id: "tyrell", name: "Tyrell", color: "#10B981", image: "/img/tyrell.png" },
+  {
+    id: "martell",
+    name: "Martell",
+    color: "#F97316",
+    image: "/img/martell.png",
+  },
 ];
 
 export const GAME_PHASES: GamePhase[] = [

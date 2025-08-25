@@ -38,15 +38,15 @@
           }"
           v-auto-animate
         >
-          <img src="/img/lannister.png" alt="Iron Throne" class="size-12" />
-          <div v-if="index === 0" class="flex items-center mt-2">
+          <img :src="house.image" :alt="house.name" class="size-24" />
+          <!-- <div v-if="index === 0" class="flex items-center mt-2">
             <Crown v-if="trackType === 'iron-throne'" class="size-12" />
             <Sword v-else-if="trackType === 'fiefdoms'" class="size-12" />
             <Bird v-else-if="trackType === 'kings-court'" class="size-12" />
             <span v-if="index === 0" class="text-sm font-medium"> </span>
           </div>
 
-          <NumberFlow v-else :value="index + 1" />
+          <NumberFlow v-else :value="index + 1" /> -->
         </div>
 
         <!-- House Info -->
