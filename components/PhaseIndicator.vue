@@ -1,42 +1,50 @@
 <template>
-  <div class="grid grid-cols-3">
-    <div class="flex col-span-2 items-center px-8 h-32">
+  <div class="grid grid-cols-3 gap-px border-t bg-muted">
+    <div
+      class="flex col-span-1 justify-center items-center px-8 h-32 bg-background"
+    >
+      <Timer class="size-12" />
       <div class="text-6xl">
         <NumberFlow :value="gameState.currentRound" />
         <span class="text-2xl text-muted-foreground">
-          of
+          /
           <NumberFlow :value="maxRounds" />
         </span>
       </div>
     </div>
+    <div class="grid grid-cols-3 col-span-1 gap-px bg-muted">
+      <div
+        v-for="(phase, index) in allPhases"
+        :key="phase.id"
+        class="flex flex-col gap-4 justify-center items-center p-8 h-32 bg-background"
+        :class="{
+          'bg-muted text-white': isCurrentPhase(index),
+          'bg-background text-border line-through': isPhaseComplete(index),
+          'bg-background text-border':
+            !isPhaseComplete(index) && !isCurrentPhase(index),
+        }"
+      >
+        <component :is="getPhaseIconComponent(phase.id)" class="size-6" />
+        <!-- <div class="text-xl">{{ phase.name }} Phase</div> -->
+      </div>
+    </div>
+
     <!-- Wildling Threat Display -->
-    <div class="flex items-center px-8 h-32" :class="wildlingThreatColor">
-      <!-- <Skull class="size-10" /> -->
+    <div
+      class="flex col-span-1 justify-center items-center px-8 h-32"
+      :class="wildlingThreatColor"
+    >
+      <Skull class="size-12" />
       <div class="text-6xl">
         <NumberFlow :value="gameState.wildlingThreat" />
         <span class="text-2xl text-muted-foreground">
-          of
+          /
           <NumberFlow :value="12" />
         </span>
       </div>
     </div>
   </div>
   <div class="grid grid-cols-3 gap-px bg-muted">
-    <div
-      v-for="(phase, index) in allPhases"
-      :key="phase.id"
-      class="flex flex-col gap-4 justify-between p-8 h-32"
-      :class="{
-        'bg-muted text-white': isCurrentPhase(index),
-        'bg-background text-border line-through': isPhaseComplete(index),
-        'bg-background text-border':
-          !isPhaseComplete(index) && !isCurrentPhase(index),
-      }"
-    >
-      <component :is="getPhaseIconComponent(phase.id)" class="size-6" />
-      <div class="text-xl">{{ phase.name }} Phase</div>
-    </div>
-
     <!-- Current Phase Subphases -->
     <div
       v-for="(subPhase, index) in currentPhaseSubPhases"
@@ -97,6 +105,7 @@ import {
   Dices,
   Drama,
   Flame,
+  Timer,
 } from "lucide-vue-next";
 import type { GamePhase, SubPhase } from "~/types/game";
 import {
@@ -245,6 +254,6 @@ const wildlingThreatColor = computed(() => {
   if (threat >= 10) return "bg-red-600";
   if (threat >= 7) return "bg-orange-500";
   if (threat >= 4) return "bg-yellow-500";
-  return "";
+  return "bg-background";
 });
 </script>

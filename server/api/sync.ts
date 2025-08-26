@@ -1,66 +1,63 @@
 export default defineEventHandler(async (event) => {
-  const method = getMethod(event)
-  
-  if (method === 'POST') {
+  const method = getMethod(event);
+
+  if (method === "POST") {
     // Client updating state - broadcast via Pusher
-    const body = await readBody(event)
-    const pusher = getPusher()
-    
+    const body = await readBody(event);
+    const pusher = getPusher();
+
     try {
       if (body.gameState !== undefined) {
-        await pusher.trigger('game-channel', 'game-state-update', {
+        await pusher.trigger("game-channel", "game-state-update", {
           gameState: body.gameState,
-          timestamp: Date.now()
-        })
-        console.log('Game state broadcasted via Pusher')
+          timestamp: Date.now(),
+        });
       }
-      
+
       if (body.settings !== undefined) {
-        await pusher.trigger('game-channel', 'settings-update', {
+        await pusher.trigger("game-channel", "settings-update", {
           settings: body.settings,
-          timestamp: Date.now()
-        })
-        console.log('Settings broadcasted via Pusher')
+          timestamp: Date.now(),
+        });
       }
-      
+
       if (body.reset) {
-        await pusher.trigger('game-channel', 'game-reset', {
-          timestamp: Date.now()
-        })
-        console.log('Game reset broadcasted via Pusher')
+        await pusher.trigger("game-channel", "game-reset", {
+          timestamp: Date.now(),
+        });
       }
-      
+
       // Timer control events
       if (body.timerAction) {
         const payload: any = {
           action: body.timerAction,
           timestamp: Date.now(),
-          serverTime: Date.now()
-        }
-        
+          serverTime: Date.now(),
+        };
+
         // Include the appropriate value field
         if (body.duration !== undefined) {
-          payload.duration = body.duration
+          payload.duration = body.duration;
         }
         if (body.timeAdjustment !== undefined) {
-          payload.timeAdjustment = body.timeAdjustment
+          payload.timeAdjustment = body.timeAdjustment;
         }
-        
-        await pusher.trigger('game-channel', 'timer-action', payload)
+
+        await pusher.trigger("game-channel", "timer-action", payload);
       }
-      
+
       return {
         success: true,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      };
     } catch (error) {
-      console.error('Pusher broadcast error:', error)
-      return { 
-        error: 'Failed to broadcast state change',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }
+      console.error("Pusher broadcast error:", error);
+      return {
+        error: "Failed to broadcast state change",
+        details: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   }
-  
-  return { error: 'Method not supported' }
-})
+
+  return { error: "Method not supported" };
+});

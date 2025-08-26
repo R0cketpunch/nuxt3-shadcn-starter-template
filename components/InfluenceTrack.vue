@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col bg-background" v-auto-animate>
+  <div class="flex flex-col flex-1 bg-background" v-auto-animate>
     <!-- Houses in Order -->
     <div
       class="grid grid-cols-1 min-h-full divide-y bg-background"
@@ -49,7 +49,7 @@
           <NumberFlow v-else :value="index + 1" />
         </div>
         <!-- House Info -->
-        <div class="p-10">
+        <div class="px-10">
           <div class="flex gap-8 items-center text-4xl font-bold">
             {{ house.playerName || `Player ${getPlayerNumber(house.id)}` }}
             <div

@@ -13,17 +13,9 @@
     </div>
 
     <div v-else class="flex flex-col min-h-screen">
-      <div
-        class="grid sticky top-0 right-0 left-0 grid-cols-4 grid-rows-2 gap-px border-b bg-muted"
+      <!-- <div
+        class="grid sticky top-0 right-0 left-0 grid-cols-4 gap-px border-b bg-muted"
       >
-        <div
-          class="flex flex-col col-span-4 justify-center items-center bg-background"
-        >
-          <div class="font-medium">{{ currentPhase }}</div>
-          <div v-if="currentSubPhase" class="text-muted-foreground">
-            {{ currentSubPhase }}
-          </div>
-        </div>
         <input
           ref="importFileInput"
           type="file"
@@ -33,29 +25,29 @@
         />
         <div
           @click="resetGame"
-          class="grid place-items-center cursor-pointer aspect-square bg-background"
+          class="grid place-items-center cursor-pointer bg-background"
         >
           <RotateCcw class="size-6" />
         </div>
         <div
           @click="exportGame"
-          class="grid place-items-center cursor-pointer aspect-square bg-background"
+          class="grid place-items-center cursor-pointer bg-background"
         >
           <Download class="size-6" />
         </div>
         <div
           @click="importFileInput?.click()"
-          class="grid place-items-center cursor-pointer aspect-square bg-background"
+          class="grid place-items-center cursor-pointer bg-background"
         >
           <Upload class="size-6" />
         </div>
         <NuxtLink
           to="/sync-test"
-          class="grid place-items-center cursor-pointer aspect-square bg-background"
+          class="grid place-items-center cursor-pointer bg-background"
         >
           <Logs class="size-6" />
         </NuxtLink>
-      </div>
+      </div> -->
       <div class="flex flex-col flex-1">
         <!-- Assign Orders Timer (only shown during assign-orders sub-phase) -->
         <div v-if="showAssignOrdersTimer" class="flex flex-col flex-1">
@@ -99,7 +91,7 @@
             <div
               v-if="!timer.isActive.value"
               @click="startAssignOrdersTimer"
-              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              class="grid place-items-center cursor-pointer bg-background"
             >
               <Play class="size-6" />
             </div>
@@ -108,7 +100,7 @@
             <div
               v-if="timer.isActive.value && !timer.isPaused.value"
               @click="pauseTimer"
-              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              class="grid place-items-center cursor-pointer bg-background"
             >
               <Pause class="size-6" />
             </div>
@@ -117,7 +109,7 @@
             <div
               v-if="timer.isActive.value && timer.isPaused.value"
               @click="resumeTimer"
-              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              class="grid place-items-center cursor-pointer bg-background"
             >
               <Play class="size-6" />
             </div>
@@ -126,21 +118,21 @@
             <div
               @click="resetAssignOrdersTimer"
               :disabled="!timer.isActive.value"
-              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              class="grid place-items-center cursor-pointer bg-background"
             >
               <RotateCcw class="size-6" />
             </div>
             <div
               @click="addTime(-60)"
               :disabled="!timer.isActive.value"
-              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              class="grid place-items-center cursor-pointer bg-background"
             >
               -1m
             </div>
             <div
               @click="addTime(60)"
               :disabled="!timer.isActive.value"
-              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              class="grid place-items-center cursor-pointer bg-background"
             >
               +1m
             </div>
@@ -160,14 +152,11 @@
             <div class="grid grid-cols-2 w-full">
               <div
                 @click="previousPlayer"
-                class="grid place-items-center bg-muted aspect-square"
+                class="grid place-items-center bg-muted"
               >
                 <ChevronLeft class="size-6" />
               </div>
-              <div
-                @click="nextPlayer"
-                class="grid place-items-center bg-muted aspect-square"
-              >
+              <div @click="nextPlayer" class="grid place-items-center bg-muted">
                 <ChevronRight class="size-6" />
               </div>
             </div>
@@ -185,7 +174,7 @@
               v-for="(track, index) in tracks"
               :key="track.id"
               @click="currentTrackIndex = index"
-              class="grid place-items-center cursor-pointer aspect-square bg-background"
+              class="grid place-items-center cursor-pointer bg-background"
               :class="
                 currentTrackIndex === index
                   ? 'bg-foreground text-background'
@@ -244,86 +233,73 @@
         </div>
 
         <!-- Wildling Controls (always available) -->
-        <div class="flex flex-col">
+        <div class="grid grid-cols-2 gap-px border-t bg-muted">
           <!-- Wildling Threat Display -->
-          <div class="flex justify-center items-center p-4 bg-card border-b">
-            <div class="text-center">
-              <div class="text-sm text-muted-foreground mb-1">
-                Wildling Threat
-              </div>
-              <div class="flex items-center justify-center space-x-2">
+          <div class="flex items-center p-4 bg-card">
+            <div>
+              <div class="text-sm text-muted-foreground">Wildling Threat</div>
+              <div class="flex items-center space-x-2">
                 <div class="text-3xl font-bold" :class="wildlingThreatColor">
                   {{ gameState.wildlingThreat }}
                 </div>
-                <div class="text-lg text-muted-foreground">/12</div>
-              </div>
-              <div
-                v-if="gameState.wildlingThreat >= 12"
-                class="text-sm text-red-600 font-bold mt-1"
-              >
-                ATTACK TRIGGERED!
-              </div>
-              <div
-                v-else-if="gameState.wildlingThreat >= 10"
-                class="text-sm text-orange-500 font-medium mt-1"
-              >
-                Attack imminent!
               </div>
             </div>
           </div>
 
           <!-- Wildling Controls -->
-          <div class="grid grid-cols-4 gap-px bg-muted">
+          <div class="grid grid-cols-2 gap-px bg-muted">
             <!-- Advance Threat -->
             <div
+              v-if="gameState.wildlingThreat < 12"
               @click="advanceWildlingThreat(1)"
-              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+              class="grid place-items-center transition-colors cursor-pointer bg-background"
             >
               <div class="text-center">
-                <div class="text-lg">+1</div>
-                <div class="text-xs">Advance</div>
+                <div class="text-xl">+1</div>
               </div>
             </div>
 
             <!-- Advance by 2 -->
             <div
+              v-if="gameState.wildlingThreat < 12"
               @click="advanceWildlingThreat(2)"
-              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+              class="grid place-items-center transition-colors cursor-pointer bg-background"
             >
               <div class="text-center">
-                <div class="text-lg">+2</div>
-                <div class="text-xs">Advance</div>
+                <div class="text-xl">+2</div>
               </div>
             </div>
 
-            <!-- Reset (Defense Success) -->
+            <!-- Reset (Defense Success) - Only when threat is 12 -->
             <div
+              v-if="gameState.wildlingThreat === 12"
               @click="resetWildlingThreat"
-              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+              class="grid place-items-center transition-colors cursor-pointer bg-background"
             >
               <div class="text-center">
-                <div class="text-lg">0</div>
-                <div class="text-xs">Defense</div>
+                <div class="text-xs">Defended</div>
               </div>
             </div>
 
-            <!-- Wildling Win -->
+            <!-- Wildling Win - Only when threat is 12 -->
             <div
+              v-if="gameState.wildlingThreat === 12"
               @click="wildlingWinReduction"
-              class="grid place-items-center cursor-pointer aspect-square bg-background hover:bg-muted transition-colors"
+              class="grid place-items-center transition-colors cursor-pointer bg-background"
             >
               <div class="text-center">
-                <div class="text-lg">-2</div>
-                <div class="text-xs">W. Win</div>
+                <div class="text-xs">Defeated</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="grid sticky right-0 bottom-0 left-0 grid-cols-4 items-center">
+      <div
+        class="grid sticky right-0 bottom-0 left-0 grid-cols-4 items-center border-t"
+      >
         <div
           @click="advanceSubPhase"
-          class="flex col-span-4 justify-center items-center p-4 w-full h-full text-4xl cursor-pointer bg-foreground text-background"
+          class="flex col-span-4 justify-center items-center p-4 w-full h-32 text-4xl cursor-pointer"
         >
           {{ getNextStepName }}
         </div>
@@ -575,14 +551,10 @@ const advanceWildlingThreat = (amount: number) => {
 };
 
 const resetWildlingThreat = () => {
-  if (confirm("Reset wildling threat to 0 (successful defense)?")) {
-    gameStateManager.resetWildlingThreat();
-  }
+  gameStateManager.resetWildlingThreat();
 };
 
 const wildlingWinReduction = () => {
-  if (confirm("Wildlings won the attack? This will reduce threat by 2.")) {
-    gameStateManager.wildlingWinReduction();
-  }
+  gameStateManager.wildlingWinReduction();
 };
 </script>
