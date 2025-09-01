@@ -653,10 +653,7 @@ const wildlingThreatColor = computed(() => {
 
 // Wildling control functions
 const advanceWildlingThreat = (amount: number) => {
-  const attackTriggered = gameStateManager.advanceWildlingThreat(amount);
-  if (attackTriggered) {
-    alert("Wildling Attack triggered! The threat has reached 12.");
-  }
+  gameStateManager.advanceWildlingThreat(amount);
 };
 
 const resetWildlingThreat = () => {

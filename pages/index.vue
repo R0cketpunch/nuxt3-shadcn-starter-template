@@ -162,6 +162,20 @@ watch(
   }
 );
 
+// Watch for wildling threat reaching 12 (wildling attack)
+let previousWildlingThreat = gameState.value.wildlingThreat;
+watch(
+  () => gameState.value.wildlingThreat,
+  (newThreat) => {
+    if (newThreat >= 12 && previousWildlingThreat < 12) {
+      // Show announcement when wildling threat reaches 12 (attack triggered)
+      announcementModal.value?.show('Wildling Attack!', 'The wildlings attack Westeros');
+      // Note: Sound is already handled by useGameSounds.ts
+    }
+    previousWildlingThreat = newThreat;
+  }
+);
+
 // Get assign orders duration from settings
 const assignOrdersDuration = computed(() => {
   return gameStateManager.settings.value.assignOrdersDuration;
