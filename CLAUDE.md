@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-This is a Nuxt 3 starter template with shadcn-vue components, featuring:
+This is a Game of Thrones board game management application built with Nuxt 3 and shadcn-vue components, featuring:
 
 ### Core Stack
 - **Nuxt 3** (^3.17.6) - Full-stack Vue framework
@@ -22,6 +22,7 @@ This is a Nuxt 3 starter template with shadcn-vue components, featuring:
 - **Tailwind CSS 4** (^4.1.11) - Utility-first styling with Vite plugin
 - **Pinia** - State management store
 - **VueUse** - Composition utilities
+- **Pusher** - Real-time WebSocket communication for multiplayer sync
 
 ### UI Components
 - **shadcn-nuxt** (^2.2.0) - Component system integration
@@ -40,21 +41,30 @@ This is a Nuxt 3 starter template with shadcn-vue components, featuring:
 ### Project Structure
 ```
 components/ui/     - shadcn-vue components (button, hover-card, etc.)
-components/        - Custom Vue components (TheNavbar, TheFooter)
+components/        - Game components (GameDisplay, GameController, InfluenceTrack, etc.)
 layouts/default.vue - Main layout wrapper
-pages/             - File-based routing
+pages/             - Game pages (index, control, setup, settings)
+composables/       - Game state management (useGameState, useRealtimeSync, etc.)
+types/game.ts      - TypeScript definitions for game entities
 lib/utils.ts       - Utility functions (cn() for class merging)
-store/             - Pinia stores
-assets/css/        - Global styles (tailwind.css)
+server/api/        - Server endpoints for real-time sync
+plugins/           - Pusher client configuration
+public/sounds/     - Game audio files for timer and phase alerts
 ```
 
 ### Game Features
+- **Real-time Multiplayer**: Pusher-based synchronization across multiple devices
+- **Game Session Management**: Create/join game sessions with unique room codes
 - **Player Management**: Houses include optional playerName field for personalization
 - **Faction Restrictions**: Enforces official player count limitations (3-6 players with specific factions)
-- **Timer System**: Audio/visual alerts for Assign Orders phase only (customizable duration, default 8 minutes, auto-starts when phase begins)
+- **Timer System**: Audio/visual alerts for Assign Orders phase only (customizable duration, default 8 minutes, manual start from control page)
 - **Iron Throne Track**: Determines turn order for Action Phase resolution (Raid → March → Consolidate)
+- **Influence Track Management**: Three tracks (Iron Throne, Fiefdoms, King's Court) with drag-and-drop reordering
+- **Dominance Tokens**: Visual representation of track leader benefits and abilities
 - **Turn Order Management**: Visual queue showing resolution order during Action sub-phases
+- **Wildling Threat Tracking**: 0-12 threat level with automatic attack triggers
 - **State Persistence**: LocalStorage with export/import functionality
+- **Audio System**: Sound effects for phase transitions, timer alerts, and game events
 - **Responsive Design**: Mobile-first with tablet optimization
 
 ### Faction Availability by Player Count
@@ -89,6 +99,20 @@ assets/css/        - Global styles (tailwind.css)
 - TypeScript enabled throughout with strict configuration
 - Component registration handled by shadcn-nuxt module
 - Player names default to "Player X" if not provided during setup
+- Real-time sync uses Pusher WebSocket events with deduplication logic
+- Game state is managed through composables with reactive updates
+- Audio files are preloaded and cached for smooth gameplay experience
+- Environment variables required: PUSHER_APP_ID, PUSHER_SECRET, PUSHER_KEY, PUSHER_CLUSTER
+
+### Game Architecture
+- **Central State Management**: `useGameState()` composable manages all game data
+- **Real-time Synchronization**: `useRealtimeSync()` handles multiplayer communication
+- **Audio Management**: `useGameAudio()` and `useGameSounds()` control sound effects
+- **Timer System**: `useGameTimer()` manages phase timers with audio alerts
+- **Type System**: Comprehensive TypeScript definitions in `types/game.ts` define all game entities
+- **Phase Management**: Game flows through Westeros → Planning → Action phases with sub-phases
+- **Turn Order Resolution**: Iron Throne track determines action resolution sequence
+- **Event Deduplication**: Prevents duplicate timer actions in multiplayer scenarios
 
 ### Additional Dependencies
 - **@formkit/auto-animate** - Animation utilities

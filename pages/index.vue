@@ -110,6 +110,18 @@
       <!-- Left Column: Game Controller -->
     </div>
 
+    <!-- Audio Test Button (for debugging) -->
+    <div v-if="hasGameStarted" class="fixed right-4 bottom-4 z-50">
+      <Button
+        @click="testAudioSystem"
+        variant="outline"
+        size="sm"
+        class="backdrop-blur-sm bg-background/80"
+      >
+        🔊 Test Audio
+      </Button>
+    </div>
+
     <!-- Game Announcement Modal -->
     <GameAnnouncement ref="announcementModal" title="" />
   </main>
@@ -125,10 +137,17 @@ const announcementModal = ref<{
   show: (title: string, subtitle?: string) => void;
 } | null>(null);
 const realtimeSync = useRealtimeSync();
+const gameAudio = useGameAudio();
 
 const hasGameStarted = computed(() => {
   return gameState.value.ironThroneOrder.length > 0;
 });
+
+// Test audio system with user interaction
+const testAudioSystem = async () => {
+  console.log("🔊 User clicked audio test button");
+  await gameAudio.testAudio();
+};
 
 // Watch for round changes to trigger announcements
 let previousRound = gameState.value.currentRound;

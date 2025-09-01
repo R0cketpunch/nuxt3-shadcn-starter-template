@@ -1,6 +1,5 @@
 export const useGameAudio = () => {
   let audioContext: AudioContext | null = null;
-  const audioCache = new Map<string, AudioBuffer>();
 
   const initAudioContext = async () => {
     if (!audioContext && typeof window !== "undefined") {
@@ -23,90 +22,105 @@ export const useGameAudio = () => {
   // Public function to ensure audio is ready (call on user interaction)
   const ensureAudioReady = async () => {
     await initAudioContext();
-    return audioContext?.state === "running";
-  };
 
-  // Load and cache audio files
-  const loadAudioFile = async (url: string): Promise<AudioBuffer | null> => {
-    if (audioCache.has(url)) {
-      console.log(`Audio file cached: ${url}`);
-      return audioCache.get(url)!;
+    // Force resume if suspended (common in browsers due to autoplay policy)
+    if (audioContext && audioContext.state === "suspended") {
+      console.log("Audio context suspended, attempting to resume...");
+      try {
+        await audioContext.resume();
+        console.log(
+          `Audio context resumed successfully, state: ${audioContext.state}`
+        );
+      } catch (error) {
+        console.warn("Failed to resume audio context:", error);
+        return false;
+      }
     }
 
-    try {
-      console.log(`Loading audio file: ${url}`);
-      await initAudioContext();
-      if (!audioContext) {
-        console.warn(`Audio context not available for: ${url}`);
-        return null;
-      }
-
-      const response = await fetch(url);
-      if (!response.ok) {
-        console.warn(`Failed to fetch audio file: ${url} - ${response.status}`);
-        return null;
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-      audioCache.set(url, audioBuffer);
-      console.log(`Successfully loaded and cached audio: ${url}`);
-      return audioBuffer;
-    } catch (error) {
-      console.warn(`Failed to load audio file: ${url}`, error);
-      return null;
-    }
+    const isReady = audioContext?.state === "running";
+    console.log(
+      `Audio ready check: ${isReady}, context state: ${audioContext?.state}`
+    );
+    return isReady;
   };
 
-  // Play custom audio file
+  // Simple audio file player using HTML5 Audio (more reliable)
   const playAudioFile = async (url: string, volume: number = 0.7) => {
     try {
-      console.log(`Attempting to play audio: ${url}`);
-      await initAudioContext();
-      if (!audioContext) {
-        console.warn(`Audio context not available for playback: ${url}`);
-        return;
-      }
+      console.log(`🔊 Playing audio: ${url} at volume ${volume}`);
 
-      if (audioContext.state === "suspended") {
-        console.log("Audio context suspended, attempting to resume...");
-        await audioContext.resume();
-      }
+      const audio = new Audio(url);
+      audio.volume = volume;
 
-      const audioBuffer = await loadAudioFile(url);
-      if (!audioBuffer) {
-        console.warn(`Audio buffer not available for: ${url}`);
-        return;
-      }
+      // Handle audio events
+      audio.addEventListener("canplaythrough", () => {
+        console.log(`✅ Audio ready: ${url}`);
+      });
 
-      const source = audioContext.createBufferSource();
-      const gainNode = audioContext.createGain();
+      audio.addEventListener("ended", () => {
+        console.log(`🏁 Audio finished: ${url}`);
+      });
 
-      source.buffer = audioBuffer;
-      source.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      gainNode.gain.value = volume;
+      audio.addEventListener("error", (e) => {
+        console.warn(`❌ Audio error for ${url}:`, e);
+      });
 
-      source.start();
-      console.log(`Successfully started playing: ${url}`);
+      // Play the audio
+      await audio.play();
+      console.log(`▶️ Audio started: ${url}`);
     } catch (error) {
       console.warn(`Failed to play audio file: ${url}`, error);
+      // Fallback to tone
+      console.log("🎵 Falling back to tone...");
+      await playTone(600, 300, volume);
     }
   };
 
-  // Generate tone (existing functionality)
+  // Test audio with immediate feedback
+  const testAudio = async () => {
+    console.log("🔊 Testing audio system...");
+
+    // Try to ensure audio is ready
+    const isReady = await ensureAudioReady();
+    console.log(`Audio ready status: ${isReady}`);
+
+    // Try playing a test tone first
+    console.log("Playing test tone...");
+    await playTone(800, 500, 0.5);
+
+    // Then try playing a test audio file
+    setTimeout(async () => {
+      console.log("Playing test audio file...");
+      await playAudioFile("/sounds/subphase.ogg", 0.8);
+    }, 600);
+  };
+
+  // Generate tone (simplified)
   const playTone = async (
     frequency: number = 800,
     duration: number = 200,
     volume: number = 0.3
   ) => {
     try {
+      console.log(
+        `Playing tone: ${frequency}Hz for ${duration}ms at volume ${volume}`
+      );
       await initAudioContext();
-      if (!audioContext) return;
+      if (!audioContext) {
+        console.warn("No audio context for tone");
+        return;
+      }
 
       if (audioContext.state === "suspended") {
+        console.log("Audio context suspended for tone, resuming...");
         await audioContext.resume();
+      }
+
+      if (audioContext.state !== "running") {
+        console.warn(
+          `Audio context not running for tone (state: ${audioContext.state})`
+        );
+        return;
       }
 
       const oscillator = audioContext.createOscillator();
@@ -124,6 +138,8 @@ export const useGameAudio = () => {
 
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + duration / 1000);
+
+      console.log(`Tone started successfully: ${frequency}Hz`);
     } catch (error) {
       console.warn("Audio tone failed:", error);
     }
@@ -169,7 +185,7 @@ export const useGameAudio = () => {
     }
   };
 
-  // Custom sound file paths (these would be stored in public/sounds/)
+  // Custom sound file paths
   const soundFiles = {
     timer: {
       start: "/sounds/timer-start.ogg",
@@ -190,10 +206,11 @@ export const useGameAudio = () => {
 
     // Try to play custom sound file first
     if (typeof window !== "undefined") {
-      const audioBuffer = await loadAudioFile(soundUrl);
-      if (audioBuffer) {
+      try {
         await playAudioFile(soundUrl);
         return;
+      } catch (error) {
+        console.warn(`Failed to play timer sound ${soundUrl}, using fallback`);
       }
     }
 
@@ -216,10 +233,11 @@ export const useGameAudio = () => {
 
     // Try to play custom sound file first
     if (typeof window !== "undefined") {
-      const audioBuffer = await loadAudioFile(soundUrl);
-      if (audioBuffer) {
+      try {
         await playAudioFile(soundUrl, 0.6);
         return;
+      } catch (error) {
+        console.warn(`Failed to play phase sound ${soundUrl}, using fallback`);
       }
     }
 
@@ -233,10 +251,13 @@ export const useGameAudio = () => {
 
     // Try to play custom sound file first
     if (typeof window !== "undefined") {
-      const audioBuffer = await loadAudioFile(soundUrl);
-      if (audioBuffer) {
+      try {
         await playAudioFile(soundUrl, 0.5);
         return;
+      } catch (error) {
+        console.warn(
+          `Failed to play subphase sound ${soundUrl}, using fallback`
+        );
       }
     }
 
@@ -250,10 +271,13 @@ export const useGameAudio = () => {
 
     // Try to play custom sound file first
     if (typeof window !== "undefined") {
-      const audioBuffer = await loadAudioFile(soundUrl);
-      if (audioBuffer) {
+      try {
         await playAudioFile(soundUrl, 0.7);
         return;
+      } catch (error) {
+        console.warn(
+          `Failed to play game end sound ${soundUrl}, using fallback`
+        );
       }
     }
 
@@ -269,10 +293,13 @@ export const useGameAudio = () => {
 
     // Try to play custom sound file first
     if (typeof window !== "undefined") {
-      const audioBuffer = await loadAudioFile(soundUrl);
-      if (audioBuffer) {
+      try {
         await playAudioFile(soundUrl, 0.4);
         return;
+      } catch (error) {
+        console.warn(
+          `Failed to play influence sound ${soundUrl}, using fallback`
+        );
       }
     }
 
@@ -290,7 +317,7 @@ export const useGameAudio = () => {
     playSubPhaseSound,
     playGameEndSound,
     playInfluenceTrackSound,
-    loadAudioFile,
     ensureAudioReady,
+    testAudio,
   };
 };

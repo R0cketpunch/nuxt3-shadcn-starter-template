@@ -88,7 +88,7 @@ export const useGameState = () => {
   watch(gameState, saveGameState, { deep: true });
   watch(settings, saveGameState, { deep: true });
 
-  // Watch for game state changes and trigger sounds
+  // Watch for game state changes and trigger sounds (with debouncing)
   watch(
     gameState,
     (newState) => {
@@ -114,6 +114,31 @@ export const useGameState = () => {
 
       // Connect to Pusher
       realtimeSync.connect();
+
+      // Fetch current state from server to ensure sync
+      setTimeout(async () => {
+        try {
+          const serverState = await realtimeSync.fetchCurrentState();
+          if (serverState) {
+            const localStateTime = gameState.value.gameStartTime || 0;
+            const localSettingsTime = Date.now(); // We don't track settings timestamps locally yet
+            
+            // Apply server game state if it's newer than local state
+            if (serverState.gameState && serverState.lastStateUpdate > localStateTime) {
+              console.log('🔄 Applying newer game state from server');
+              gameState.value = { ...initialGameState, ...serverState.gameState };
+            }
+            
+            // Apply server settings if they exist and are newer
+            if (serverState.settings && serverState.lastSettingsUpdate > localSettingsTime - 5000) { // 5 second tolerance
+              console.log('🔄 Applying newer settings from server');
+              settings.value = { ...initialSettings, ...serverState.settings };
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️  Could not sync with server state:', error);
+        }
+      }, 1000); // Delay to ensure connection is established
 
       // Listen for game state updates from other devices
       realtimeSync.onGameStateUpdate(({ gameState: newState, timestamp }) => {
@@ -240,14 +265,6 @@ export const useGameState = () => {
 
     // Explicitly broadcast the new game state
     broadcastStateChange();
-
-    // Auto-start the Assign Orders timer when game initializes
-    setTimeout(() => {
-      realtimeSync.broadcastTimerAction(
-        "start",
-        settings.value.assignOrdersDuration
-      );
-    }, 1000); // Delay to ensure game state is fully set up
   };
 
   const nextPhase = () => {
@@ -272,16 +289,6 @@ export const useGameState = () => {
       gameState.value.currentPhase = GAME_PHASES[1]; // Planning
       gameState.value.currentSubPhase = PLANNING_SUBPHASES[0]; // Assign Orders
       gameState.value.currentPlayerIndex = 0;
-
-      // Auto-start the Assign Orders timer
-      if (gameState.value.currentSubPhase.id === "assign-orders") {
-        setTimeout(() => {
-          realtimeSync.broadcastTimerAction(
-            "start",
-            settings.value.assignOrdersDuration
-          );
-        }, 500); // Small delay to ensure phase transition is complete
-      }
     } else if (gameState.value.currentPhase.id === "planning") {
       gameState.value.currentPhase = GAME_PHASES[2]; // Action
       gameState.value.currentSubPhase = ACTION_SUBPHASES[0]; // Raid Orders
@@ -541,15 +548,59 @@ export const useGameState = () => {
     updateWildlingThreat(newThreat);
   };
 
+  const syncWithServer = async () => {
+    try {
+      console.log('🔄 Manually syncing with server...');
+      const serverState = await realtimeSync.fetchCurrentState();
+      if (serverState) {
+        const localStateTime = gameState.value.gameStartTime || 0;
+        
+        // Apply server game state if it's newer than local state
+        if (serverState.gameState && serverState.lastStateUpdate > localStateTime) {
+          console.log('🔄 Applying newer game state from server');
+          gameState.value = { ...initialGameState, ...serverState.gameState };
+          return true; // State was updated
+        } else {
+          console.log('✅ Local state is up to date');
+          return false; // No update needed
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ Error syncing with server:', error);
+      return false;
+    }
+  };
+
   // Initialize on mount
   onMounted(() => {
     loadGameState();
     const cleanup = listenForStateChanges();
 
+    // Auto-sync when page becomes visible (user switches back to tab)
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) {
+        console.log('🔄 Page became visible, syncing with server...');
+        await syncWithServer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Also sync when window regains focus
+    const handleFocus = async () => {
+      console.log('🔄 Window gained focus, syncing with server...');
+      await syncWithServer();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
     // Cleanup when component unmounts (if available)
     if (typeof onBeforeUnmount === "function") {
       onBeforeUnmount(() => {
         cleanup();
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('focus', handleFocus);
       });
     }
   });
@@ -584,5 +635,6 @@ export const useGameState = () => {
     advanceWildlingThreat,
     resetWildlingThreat,
     wildlingWinReduction,
+    syncWithServer,
   };
 };

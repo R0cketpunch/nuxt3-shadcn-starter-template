@@ -1,21 +1,36 @@
 import type { GameState } from "~/types/game";
 
-export const useGameSounds = () => {
+// Simple singleton for game sounds with debouncing
+let gameSoundsInstance: ReturnType<typeof createGameSounds> | null = null;
+
+const createGameSounds = () => {
   const gameAudio = useGameAudio();
 
   // Track previous state to detect changes
   let previousState: GameState | null = null;
-  let lastWildlingAttackThreat = 0;
+  let processTimeout: NodeJS.Timeout | null = null;
 
   // Check if audio is enabled in settings
   const isAudioEnabled = () => {
-    // This will be checked when needed, ensuring we get the latest settings
     const { settings } = useGameState();
     return settings.value.audioEnabled;
   };
 
-  // Main function to process state changes and trigger sounds
+  // Main function to process state changes and trigger sounds (with debouncing)
   const processStateChange = (newState: GameState) => {
+    // Clear any pending processing
+    if (processTimeout) {
+      clearTimeout(processTimeout);
+    }
+
+    // Debounce rapid state changes (wait 50ms for changes to settle)
+    processTimeout = setTimeout(() => {
+      processStateChangeInternal(newState);
+    }, 50);
+  };
+
+  // Internal function that actually processes the state change
+  const processStateChangeInternal = (newState: GameState) => {
     if (!isAudioEnabled()) {
       previousState = newState;
       return;
@@ -26,17 +41,17 @@ export const useGameSounds = () => {
       return;
     }
 
+    console.log("🎵 Processing audio for state change...");
+
     // Check for round changes
     if (newState.currentRound > previousState.currentRound) {
-      console.log("🎵 Playing round transition sound");
+      console.log("🎵 Round changed - playing round sound");
       gameAudio.playPhaseSound("round").catch(console.warn);
     }
 
     // Check for phase changes
     if (newState.currentPhase.id !== previousState.currentPhase.id) {
-      console.log(
-        `🎵 Playing phase transition sound: ${newState.currentPhase.id}`
-      );
+      console.log(`🎵 Phase changed to: ${newState.currentPhase.id}`);
 
       // Small delay to not overlap with round sound
       const delay =
@@ -62,18 +77,15 @@ export const useGameSounds = () => {
       newState.currentSubPhase?.id !== previousState.currentSubPhase?.id &&
       previousState.currentSubPhase !== undefined
     ) {
-      console.log(
-        `🎵 Playing sub-phase transition sound: ${newState.currentSubPhase?.id}`
-      );
+      console.log(`🎵 Sub-phase changed to: ${newState.currentSubPhase?.id}`);
       gameAudio.playSubPhaseSound().catch(console.warn);
     }
 
     // Check for wildling threat changes that trigger an attack
     if (newState.wildlingThreat >= 12 && previousState.wildlingThreat < 12) {
-      console.log("🎵 Playing wildling attack sound");
-      // Try to play wildling attack sound, fallback to phase sound
+      console.log("🎵 Wildling attack triggered!");
       gameAudio.playAudioFile("/sounds/wildling-attack.ogg", 0.8).catch(() => {
-        // Fallback to a dramatic tone sequence
+        // Fallback to dramatic tone sequence
         gameAudio.playTone(200, 800, 0.6).catch(console.warn);
         setTimeout(
           () => gameAudio.playTone(180, 600, 0.7).catch(console.warn),
@@ -92,13 +104,13 @@ export const useGameSounds = () => {
       previousState
     );
     if (influenceTracksChanged) {
-      console.log("🎵 Playing influence track movement sound");
+      console.log("🎵 Influence tracks changed");
       gameAudio.playInfluenceTrackSound().catch(console.warn);
     }
 
     // Check if game has ended
     if (newState.currentRound > 10 && previousState.currentRound <= 10) {
-      console.log("🎵 Playing game end sound");
+      console.log("🎵 Game ended!");
       gameAudio.playGameEndSound().catch(console.warn);
     }
 
@@ -144,14 +156,28 @@ export const useGameSounds = () => {
     return false;
   };
 
-  // Function to reset the sound system (useful when game resets)
+  // Function to reset the sound system
   const reset = () => {
     previousState = null;
-    lastWildlingAttackThreat = 0;
+    if (processTimeout) {
+      clearTimeout(processTimeout);
+      processTimeout = null;
+    }
+    console.log("🎵 Audio system reset");
   };
 
   return {
     processStateChange,
     reset,
   };
+};
+
+// Singleton function to ensure only one instance exists
+export const useGameSounds = () => {
+  if (!gameSoundsInstance) {
+    console.log("🎵 Creating new GameSounds instance");
+    gameSoundsInstance = createGameSounds();
+  }
+
+  return gameSoundsInstance;
 };

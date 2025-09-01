@@ -170,6 +170,31 @@ export const useRealtimeSync = () => {
       console.error('❌ Error broadcasting timer action:', error)
     }
   }
+
+  const fetchCurrentState = async () => {
+    try {
+      console.log('🔄 Fetching current game state from server...')
+      const response = await $fetch('/api/sync', {
+        method: 'GET'
+      })
+      
+      if (response.success) {
+        console.log('✅ Current state fetched successfully:', response)
+        return {
+          gameState: response.gameState,
+          settings: response.settings,
+          lastStateUpdate: response.lastStateUpdate,
+          lastSettingsUpdate: response.lastSettingsUpdate
+        }
+      } else {
+        console.error('❌ Failed to fetch current state:', response)
+        return null
+      }
+    } catch (error) {
+      console.error('❌ Error fetching current state:', error)
+      return null
+    }
+  }
   
   return {
     isConnected: readonly(isConnected),
@@ -183,6 +208,7 @@ export const useRealtimeSync = () => {
     broadcastGameState,
     broadcastSettings,
     broadcastReset,
-    broadcastTimerAction
+    broadcastTimerAction,
+    fetchCurrentState
   }
 }

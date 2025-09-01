@@ -1,13 +1,28 @@
 export default defineEventHandler(async (event) => {
   const method = getMethod(event);
 
+  if (method === "GET") {
+    // Client requesting current state
+    const { getCurrentGameState } = await import('~/server/utils/pusher');
+    const currentState = getCurrentGameState();
+    
+    return {
+      success: true,
+      ...currentState
+    };
+  }
+
   if (method === "POST") {
     // Client updating state - broadcast via Pusher
     const body = await readBody(event);
     const pusher = getPusher();
+    const { setCurrentGameState, setCurrentSettings } = await import('~/server/utils/pusher');
 
     try {
       if (body.gameState !== undefined) {
+        // Store the current state on server
+        setCurrentGameState(body.gameState);
+        
         await pusher.trigger("game-channel", "game-state-update", {
           gameState: body.gameState,
           timestamp: Date.now(),
@@ -15,6 +30,9 @@ export default defineEventHandler(async (event) => {
       }
 
       if (body.settings !== undefined) {
+        // Store the current settings on server
+        setCurrentSettings(body.settings);
+        
         await pusher.trigger("game-channel", "settings-update", {
           settings: body.settings,
           timestamp: Date.now(),
@@ -22,6 +40,11 @@ export default defineEventHandler(async (event) => {
       }
 
       if (body.reset) {
+        // Clear server state on reset
+        const { setCurrentGameState, setCurrentSettings } = await import('~/server/utils/pusher');
+        setCurrentGameState(null as any);
+        setCurrentSettings(null as any);
+        
         await pusher.trigger("game-channel", "game-reset", {
           timestamp: Date.now(),
         });

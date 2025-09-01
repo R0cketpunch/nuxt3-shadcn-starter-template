@@ -91,7 +91,7 @@
             <div
               v-if="!timer.isActive.value"
               @click="startAssignOrdersTimer"
-              class="grid place-items-center cursor-pointer bg-background"
+              class="grid place-items-center cursor-pointer bg-background aspect-square"
             >
               <Play class="size-6" />
             </div>
@@ -100,7 +100,7 @@
             <div
               v-if="timer.isActive.value && !timer.isPaused.value"
               @click="pauseTimer"
-              class="grid place-items-center cursor-pointer bg-background"
+              class="grid place-items-center cursor-pointer bg-background aspect-square"
             >
               <Pause class="size-6" />
             </div>
@@ -109,7 +109,7 @@
             <div
               v-if="timer.isActive.value && timer.isPaused.value"
               @click="resumeTimer"
-              class="grid place-items-center cursor-pointer bg-background"
+              class="grid place-items-center cursor-pointer bg-background aspect-square"
             >
               <Play class="size-6" />
             </div>
@@ -118,14 +118,14 @@
             <div
               @click="resetAssignOrdersTimer"
               :disabled="!timer.isActive.value"
-              class="grid place-items-center cursor-pointer bg-background"
+              class="grid place-items-center cursor-pointer bg-background aspect-square"
             >
               <RotateCcw class="size-6" />
             </div>
             <div
               @click="addTime(-60)"
               :disabled="!timer.isActive.value"
-              class="grid place-items-center cursor-pointer bg-background"
+              class="grid place-items-center cursor-pointer bg-background aspect-square"
             >
               -1m
             </div>
@@ -152,11 +152,14 @@
             <div class="grid grid-cols-2 w-full">
               <div
                 @click="previousPlayer"
-                class="grid place-items-center bg-muted"
+                class="grid place-items-center bg-muted aspect-square"
               >
                 <ChevronLeft class="size-6" />
               </div>
-              <div @click="nextPlayer" class="grid place-items-center bg-muted">
+              <div
+                @click="nextPlayer"
+                class="grid place-items-center bg-muted aspect-square"
+              >
                 <ChevronRight class="size-6" />
               </div>
             </div>
@@ -166,7 +169,7 @@
         <!-- Influence Track Controls (Westeros Phase Only) -->
         <div
           v-if="gameState.currentPhase.id === 'westeros'"
-          class="flex flex-col flex-1"
+          class="flex flex-col flex-1 min-h-full"
         >
           <!-- Track Navigation -->
           <div class="grid grid-cols-3 gap-px border-b bg-muted">
@@ -174,21 +177,21 @@
               v-for="(track, index) in tracks"
               :key="track.id"
               @click="currentTrackIndex = index"
-              class="grid place-items-center cursor-pointer bg-background"
+              class="grid place-items-center cursor-pointer bg-background aspect-square"
               :class="
                 currentTrackIndex === index
                   ? 'bg-foreground text-background'
                   : 'bg-background'
               "
             >
-              {{ track.name }}
+              <component :is="track.icon" class="size-6" />
             </button>
           </div>
 
           <!-- Swipeable Track Container -->
-          <div class="overflow-hidden relative flex-1">
+          <div class="flex overflow-hidden relative flex-1 min-h-full">
             <div
-              class="flex h-full transition-transform duration-300 ease-out"
+              class="flex flex-1 h-full min-h-full transition-transform duration-300 ease-out"
               :style="{ transform: `translateX(-${currentTrackIndex * 100}%)` }"
               @touchstart="handleTouchStart"
               @touchend="handleTouchEnd"
@@ -233,7 +236,10 @@
         </div>
 
         <!-- Wildling Controls (always available) -->
-        <div class="grid grid-cols-2 gap-px border-t bg-muted">
+        <div
+          class="grid grid-cols-2 gap-px border-t bg-muted"
+          v-if="gameState.currentPhase.id === 'westeros'"
+        >
           <!-- Wildling Threat Display -->
           <div class="flex items-center p-4 bg-card">
             <div>
@@ -251,11 +257,11 @@
             <!-- Advance Threat -->
             <div
               v-if="gameState.wildlingThreat < 12"
-              @click="advanceWildlingThreat(1)"
-              class="grid place-items-center transition-colors cursor-pointer bg-background"
+              @click="advanceWildlingThreat(-2)"
+              class="grid place-items-center transition-colors cursor-pointer bg-background aspect-square"
             >
               <div class="text-center">
-                <div class="text-xl">+1</div>
+                <div class="text-xl">-2</div>
               </div>
             </div>
 
@@ -263,7 +269,7 @@
             <div
               v-if="gameState.wildlingThreat < 12"
               @click="advanceWildlingThreat(2)"
-              class="grid place-items-center transition-colors cursor-pointer bg-background"
+              class="grid place-items-center transition-colors cursor-pointer bg-background aspect-square"
             >
               <div class="text-center">
                 <div class="text-xl">+2</div>
@@ -274,10 +280,10 @@
             <div
               v-if="gameState.wildlingThreat === 12"
               @click="resetWildlingThreat"
-              class="grid place-items-center transition-colors cursor-pointer bg-background"
+              class="grid place-items-center transition-colors cursor-pointer bg-background aspect-square"
             >
               <div class="text-center">
-                <div class="text-xs">Defended</div>
+                <div class="text-xs">Win (0)</div>
               </div>
             </div>
 
@@ -285,21 +291,31 @@
             <div
               v-if="gameState.wildlingThreat === 12"
               @click="wildlingWinReduction"
-              class="grid place-items-center transition-colors cursor-pointer bg-background"
+              class="grid place-items-center transition-colors cursor-pointer bg-background aspect-square"
             >
               <div class="text-center">
-                <div class="text-xs">Defeated</div>
+                <div class="text-xs">Lost (-2)</div>
               </div>
             </div>
           </div>
         </div>
       </div>
       <div
-        class="grid sticky right-0 bottom-0 left-0 grid-cols-4 items-center border-t"
+        class="grid sticky right-0 bottom-0 left-0 grid-cols-5 items-center border-t"
       >
         <div
+          @click="syncWithServer"
+          class="grid place-items-center cursor-pointer bg-muted aspect-square"
+          :class="syncingState ? 'opacity-50' : ''"
+        >
+          <RefreshCw
+            class="size-6"
+            :class="syncingState ? 'animate-spin' : ''"
+          />
+        </div>
+        <div
           @click="advanceSubPhase"
-          class="flex col-span-4 justify-center items-center p-4 w-full h-32 text-4xl cursor-pointer"
+          class="flex col-span-4 justify-center items-center p-4 w-full text-4xl cursor-pointer"
         >
           {{ getNextStepName }}
         </div>
@@ -321,6 +337,7 @@ import {
   Timer,
   Users,
   Logs,
+  RefreshCw,
 } from "lucide-vue-next";
 import type { House } from "~/types/game";
 import { MAX_ROUNDS } from "~/types/game";
@@ -329,6 +346,7 @@ import { vAutoAnimate } from "@formkit/auto-animate/vue";
 const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
 const timer = useGlobalGameTimer();
+import { Crown, Sword, Bird } from "lucide-vue-next";
 
 const importFileInput = ref<HTMLInputElement | null>(null);
 
@@ -392,12 +410,50 @@ const timeComponents = computed(() => {
 
 const realtimeSync = useRealtimeSync();
 
+// Syncing state
+const syncingState = ref(false);
+
+// Manual sync function
+const syncWithServer = async () => {
+  if (syncingState.value) return; // Prevent multiple concurrent syncs
+
+  syncingState.value = true;
+  try {
+    const updated = await gameStateManager.syncWithServer();
+    if (updated) {
+      console.log("✅ State updated from server");
+    } else {
+      console.log("ℹ️ Already up to date");
+    }
+  } catch (error) {
+    console.error("❌ Sync failed:", error);
+  } finally {
+    syncingState.value = false;
+  }
+};
+
+// Initialize timer with correct duration when on assign orders phase
+watch(
+  showAssignOrdersTimer,
+  (shouldShow) => {
+    if (shouldShow && !timer.isActive.value) {
+      // Reset timer to show the assign orders duration but don't start it
+      timer.resetTimer(
+        assignOrdersDuration.value,
+        true,
+        gameState.value.gameStartTime
+      );
+    }
+  },
+  { immediate: true }
+);
+
 // Influence track carousel state
 const currentTrackIndex = ref(0);
 const tracks = [
-  { id: "iron-throne", name: "Iron Throne" },
-  { id: "fiefdoms", name: "Fiefdoms" },
-  { id: "kings-court", name: "King's Court" },
+  { id: "iron-throne", name: "Iron Throne", icon: Crown },
+  { id: "fiefdoms", name: "Fiefdoms", icon: Sword },
+  { id: "kings-court", name: "King's Court", icon: Bird },
 ];
 
 // Touch handling for swipe gestures
@@ -437,26 +493,62 @@ const startAssignOrdersTimer = async () => {
   try {
     const ready = await gameAudio.ensureAudioReady();
     console.log(`Audio ready on timer start: ${ready}`);
+
+    if (!ready) {
+      console.warn(
+        "Audio not ready even after user interaction - browser may have stricter policies"
+      );
+      // Try to play a test tone to see if that helps
+      await gameAudio.playTone(440, 100, 0.1);
+    }
   } catch (error) {
     console.warn("Failed to initialize audio:", error);
   }
 
+  // Start timer locally immediately
+  timer.startTimer(
+    assignOrdersDuration.value,
+    true,
+    gameState.value.gameStartTime
+  );
+
+  // Also broadcast to other devices
   realtimeSync.broadcastTimerAction("start", assignOrdersDuration.value);
 };
 
 const resetAssignOrdersTimer = () => {
+  // Reset timer locally immediately
+  timer.resetTimer(
+    assignOrdersDuration.value,
+    true,
+    gameState.value.gameStartTime
+  );
+
+  // Also broadcast to other devices
   realtimeSync.broadcastTimerAction("reset", assignOrdersDuration.value);
 };
 
 const pauseTimer = () => {
+  // Pause timer locally immediately
+  timer.pauseTimer();
+
+  // Also broadcast to other devices
   realtimeSync.broadcastTimerAction("pause");
 };
 
 const resumeTimer = () => {
+  // Resume timer locally immediately
+  timer.resumeTimer();
+
+  // Also broadcast to other devices
   realtimeSync.broadcastTimerAction("resume");
 };
 
 const addTime = (seconds: number) => {
+  // Add time locally immediately
+  timer.addTime(seconds);
+
+  // Also broadcast to other devices
   realtimeSync.broadcastTimerAction("addTime", seconds);
 };
 
