@@ -180,11 +180,12 @@
               class="grid place-items-center cursor-pointer bg-background aspect-square"
               :class="
                 currentTrackIndex === index
-                  ? 'bg-foreground text-background'
+                  ? 'bg-muted text-background'
                   : 'bg-background'
               "
             >
-              <component :is="track.icon" class="size-6" />
+              <img :src="track.image" :alt="track.name" class="size-16" />
+              <!-- <component :is="track.icon" class="size-6" /> -->
             </button>
           </div>
 
@@ -347,6 +348,7 @@ const gameStateManager = useGameState();
 const gameState = gameStateManager.gameState;
 const timer = useGlobalGameTimer();
 import { Crown, Sword, Bird } from "lucide-vue-next";
+import type { InfluenceTrack } from "~/types/game";
 
 const importFileInput = ref<HTMLInputElement | null>(null);
 
@@ -451,9 +453,24 @@ watch(
 // Influence track carousel state
 const currentTrackIndex = ref(0);
 const tracks = [
-  { id: "iron-throne", name: "Iron Throne", icon: Crown },
-  { id: "fiefdoms", name: "Fiefdoms", icon: Sword },
-  { id: "kings-court", name: "King's Court", icon: Bird },
+  {
+    id: "iron-throne",
+    name: "Iron Throne",
+    icon: Crown,
+    image: "/img/iron-throne.png",
+  },
+  {
+    id: "fiefdoms",
+    name: "Fiefdoms",
+    icon: Sword,
+    image: "/img/valyrian-steel-blade.png",
+  },
+  {
+    id: "kings-court",
+    name: "King's Court",
+    icon: Bird,
+    image: "/img/messenger-raven.png",
+  },
 ];
 
 // Touch handling for swipe gestures

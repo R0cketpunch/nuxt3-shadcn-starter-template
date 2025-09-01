@@ -115,30 +115,6 @@ export const useGameState = () => {
       // Connect to Pusher
       realtimeSync.connect();
 
-      // Fetch current state from server to ensure sync
-      setTimeout(async () => {
-        try {
-          const serverState = await realtimeSync.fetchCurrentState();
-          if (serverState) {
-            const localStateTime = gameState.value.gameStartTime || 0;
-            const localSettingsTime = Date.now(); // We don't track settings timestamps locally yet
-            
-            // Apply server game state if it's newer than local state
-            if (serverState.gameState && serverState.lastStateUpdate > localStateTime) {
-              console.log('🔄 Applying newer game state from server');
-              gameState.value = { ...initialGameState, ...serverState.gameState };
-            }
-            
-            // Apply server settings if they exist and are newer
-            if (serverState.settings && serverState.lastSettingsUpdate > localSettingsTime - 5000) { // 5 second tolerance
-              console.log('🔄 Applying newer settings from server');
-              settings.value = { ...initialSettings, ...serverState.settings };
-            }
-          }
-        } catch (error) {
-          console.warn('⚠️  Could not sync with server state:', error);
-        }
-      }, 1000); // Delay to ensure connection is established
 
       // Listen for game state updates from other devices
       realtimeSync.onGameStateUpdate(({ gameState: newState, timestamp }) => {
@@ -577,30 +553,11 @@ export const useGameState = () => {
     loadGameState();
     const cleanup = listenForStateChanges();
 
-    // Auto-sync when page becomes visible (user switches back to tab)
-    const handleVisibilityChange = async () => {
-      if (!document.hidden) {
-        console.log('🔄 Page became visible, syncing with server...');
-        await syncWithServer();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Also sync when window regains focus
-    const handleFocus = async () => {
-      console.log('🔄 Window gained focus, syncing with server...');
-      await syncWithServer();
-    };
-
-    window.addEventListener('focus', handleFocus);
 
     // Cleanup when component unmounts (if available)
     if (typeof onBeforeUnmount === "function") {
       onBeforeUnmount(() => {
         cleanup();
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('focus', handleFocus);
       });
     }
   });

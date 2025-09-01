@@ -9,51 +9,49 @@
         v-for="(house, index) in houses"
         :key="house.id"
         :data-row-index="index"
-        class="grid relative grid-cols-[auto_1fr] items-center transition-all duration-200"
-        :class="{
-          'bg-foreground text-background':
-            showCurrentPlayer && index === currentPlayerIndex,
-          'text-muted-foreground':
-            !isCurrentPlayerTurn(index) && showCurrentPlayer,
-          'cursor-move': allowReordering,
-          'cursor-pointer': !allowReordering && showCurrentPlayer,
-          'select-none': allowReordering,
-          'touch-manipulation': allowReordering,
-        }"
-        :style="allowReordering ? { 'user-select': 'none', '-webkit-user-select': 'none' } : {}"
+        class="grid relative items-center transition-all duration-200 min-h-24"
+        :class="[
+          allowReordering
+            ? 'grid-cols-[auto_1fr_auto]'
+            : 'grid-cols-[auto_1fr]',
+          {
+            'bg-foreground text-background':
+              showCurrentPlayer && index === currentPlayerIndex,
+            'text-muted-foreground':
+              !isCurrentPlayerTurn(index) && showCurrentPlayer,
+            'cursor-pointer': !allowReordering && showCurrentPlayer,
+          },
+        ]"
         :draggable="allowReordering"
         @click="!allowReordering && showCurrentPlayer && setCurrentPlayer()"
         @dragstart="handleDragStart($event, index)"
         @dragover="handleDragOver($event)"
         @drop="handleDrop($event, index)"
-        @touchstart="handleTouchStart($event, index)"
-        @touchmove="handleTouchMove($event)"
-        @touchend="handleTouchEnd($event)"
       >
         <!-- Position Number -->
         <div
-          class="grid relative place-items-center h-full text-6xl font-bold text-white aspect-square"
+          class="grid relative place-items-center h-full font-bold text-white lg:text-6xl aspect-square"
           :style="{
             backgroundColor: house.color + '20',
             color: house.color,
           }"
           v-auto-animate
         >
-          <!-- <img :src="house.image" :alt="house.name" class="size-24" />
+          <img :src="house.image" :alt="house.name" class="size-24" />
           <img
             v-if="dominanceToken && index === 0"
             :src="dominanceToken.image"
             :alt="dominanceToken.name"
-            class="absolute top-6 right-6 size-16"
-          /> -->
-          <div v-if="index === 0" class="flex items-center mt-2">
+            class="absolute right-2 top-4 size-16"
+          />
+          <!-- <div v-if="index === 0" class="flex items-center mt-2">
             <Crown v-if="trackType === 'iron-throne'" class="size-12" />
             <Sword v-else-if="trackType === 'fiefdoms'" class="size-12" />
             <Bird v-else-if="trackType === 'kings-court'" class="size-12" />
             <span v-if="index === 0" class="text-sm font-medium"> </span>
           </div>
 
-          <NumberFlow v-else :value="index + 1" />
+          <NumberFlow v-else :value="index + 1" /> -->
         </div>
         <!-- House Info -->
         <div class="px-10">
@@ -76,13 +74,46 @@
 
           <!-- Special Position Indicator -->
         </div>
+
+        <!-- Up/Down Buttons for Reordering -->
+        <div
+          v-if="allowReordering"
+          class="grid grid-rows-2 gap-px h-full bg-muted"
+        >
+          <button
+            @click.stop="moveUp(index)"
+            :disabled="index === 0"
+            class="grid place-items-center w-full h-full transition-colors aspect-square"
+            :class="index === 0 ? 'opacity-20' : 'bg-background'"
+          >
+            <ChevronUp class="size-4" />
+          </button>
+          <button
+            @click.stop="moveDown(index)"
+            :disabled="index === houses.length - 1"
+            class="grid place-items-center w-full h-full transition-colors aspect-square"
+            :class="
+              index === houses.length - 1 ? 'opacity-20' : 'bg-background'
+            "
+          >
+            <ChevronDown class="size-4" />
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Crown as Throne, Bird, Sword, Star, Crown } from "lucide-vue-next";
+import {
+  Crown as Throne,
+  Bird,
+  Sword,
+  Star,
+  Crown,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-vue-next";
 import type { House } from "~/types/game";
 import { getInfluenceTrack, getTrackDominanceToken } from "~/types/game";
 import { vAutoAnimate } from "@formkit/auto-animate/vue";
@@ -166,16 +197,6 @@ const getStarCount = (index: number): number => {
 // Drag and drop state
 const draggedIndex = ref<number>(-1);
 
-// Touch drag state
-const touchDragState = ref({
-  isDragging: false,
-  draggedIndex: -1,
-  startY: 0,
-  currentY: 0,
-  dragElement: null as HTMLElement | null,
-  placeholder: null as HTMLElement | null,
-});
-
 // Drag and drop handlers
 const handleDragStart = (event: DragEvent, index: number) => {
   if (!props.allowReordering) return;
@@ -214,109 +235,26 @@ const handleDrop = (event: DragEvent, dropIndex: number) => {
   draggedIndex.value = -1;
 };
 
-// Touch event handlers for mobile drag support
-const handleTouchStart = (event: TouchEvent, index: number) => {
-  if (!props.allowReordering) return;
+// Simple move functions for up/down buttons
+const moveUp = (index: number) => {
+  if (index === 0) return; // Can't move up if already at top
 
-  const touch = event.touches[0];
-  const element = event.currentTarget as HTMLElement;
-  
-  touchDragState.value = {
-    isDragging: true,
-    draggedIndex: index,
-    startY: touch.clientY,
-    currentY: touch.clientY,
-    dragElement: element,
-    placeholder: null,
-  };
+  const reorderedHouses = [...props.houses];
+  const house = reorderedHouses[index];
+  reorderedHouses.splice(index, 1);
+  reorderedHouses.splice(index - 1, 0, house);
 
-  // Prevent scrolling during drag
-  event.preventDefault();
-  
-  // Add visual feedback
-  element.style.transform = 'scale(1.05)';
-  element.style.zIndex = '1000';
-  element.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+  emit("reorder-houses", reorderedHouses);
 };
 
-const handleTouchMove = (event: TouchEvent) => {
-  if (!touchDragState.value.isDragging || !touchDragState.value.dragElement) return;
+const moveDown = (index: number) => {
+  if (index === props.houses.length - 1) return; // Can't move down if already at bottom
 
-  const touch = event.touches[0];
-  const deltaY = touch.clientY - touchDragState.value.startY;
-  
-  touchDragState.value.currentY = touch.clientY;
-  
-  // Move the dragged element
-  touchDragState.value.dragElement.style.transform = `scale(1.05) translateY(${deltaY}px)`;
-  
-  // Find the element we're hovering over
-  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-  const rowElement = elementBelow?.closest('[data-row-index]') as HTMLElement;
-  
-  if (rowElement) {
-    const targetIndex = parseInt(rowElement.getAttribute('data-row-index') || '0');
-    
-    // Visual feedback for drop target
-    const allRows = document.querySelectorAll('[data-row-index]');
-    allRows.forEach(row => {
-      (row as HTMLElement).style.borderTop = '';
-      (row as HTMLElement).style.borderBottom = '';
-    });
-    
-    if (targetIndex !== touchDragState.value.draggedIndex) {
-      if (targetIndex < touchDragState.value.draggedIndex) {
-        rowElement.style.borderTop = '3px solid #3b82f6';
-      } else {
-        rowElement.style.borderBottom = '3px solid #3b82f6';
-      }
-    }
-  }
-  
-  event.preventDefault();
-};
+  const reorderedHouses = [...props.houses];
+  const house = reorderedHouses[index];
+  reorderedHouses.splice(index, 1);
+  reorderedHouses.splice(index + 1, 0, house);
 
-const handleTouchEnd = (event: TouchEvent) => {
-  if (!touchDragState.value.isDragging || !touchDragState.value.dragElement) return;
-
-  const touch = event.changedTouches[0];
-  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-  const rowElement = elementBelow?.closest('[data-row-index]') as HTMLElement;
-  
-  // Reset visual styles
-  touchDragState.value.dragElement.style.transform = '';
-  touchDragState.value.dragElement.style.zIndex = '';
-  touchDragState.value.dragElement.style.boxShadow = '';
-  
-  // Clear border highlights
-  const allRows = document.querySelectorAll('[data-row-index]');
-  allRows.forEach(row => {
-    (row as HTMLElement).style.borderTop = '';
-    (row as HTMLElement).style.borderBottom = '';
-  });
-  
-  if (rowElement) {
-    const targetIndex = parseInt(rowElement.getAttribute('data-row-index') || '0');
-    
-    if (targetIndex !== touchDragState.value.draggedIndex) {
-      // Perform the reorder
-      const reorderedHouses = [...props.houses];
-      const draggedHouse = reorderedHouses[touchDragState.value.draggedIndex];
-      reorderedHouses.splice(touchDragState.value.draggedIndex, 1);
-      reorderedHouses.splice(targetIndex, 0, draggedHouse);
-      
-      emit("reorder-houses", reorderedHouses);
-    }
-  }
-  
-  // Reset touch drag state
-  touchDragState.value = {
-    isDragging: false,
-    draggedIndex: -1,
-    startY: 0,
-    currentY: 0,
-    dragElement: null,
-    placeholder: null,
-  };
+  emit("reorder-houses", reorderedHouses);
 };
 </script>

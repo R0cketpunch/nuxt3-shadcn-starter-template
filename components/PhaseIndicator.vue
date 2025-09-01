@@ -49,7 +49,7 @@
     <div
       v-for="(subPhase, index) in currentPhaseSubPhases"
       :key="`sub-${subPhase.id}`"
-      class="flex flex-col gap-4 justify-between p-8 h-32"
+      class="flex gap-4 items-center p-8 h-32"
       :class="{
         'bg-muted text-white': isCurrentSubPhase(subPhase),
         'bg-background text-border line-through': isSubPhaseComplete(index),
@@ -57,10 +57,18 @@
           !isSubPhaseComplete(index) && !isCurrentSubPhase(subPhase),
       }"
     >
-      <div class="relative">
+      <!-- <div class="relative">
         <component :is="getSubPhaseIconComponent(subPhase)" class="size-6" />
-      </div>
-      <!-- <img :src="subPhase.image" :alt="subPhase.name" class="size-16" /> -->
+      </div> -->
+      <img
+        :src="subPhase.image"
+        :alt="subPhase.name"
+        class="size-16"
+        :class="{
+          'opacity-50':
+            isSubPhaseComplete(index) || !isCurrentSubPhase(subPhase),
+        }"
+      />
 
       <div class="text-xl">
         {{ subPhase.name }}

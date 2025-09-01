@@ -114,7 +114,7 @@ export const INFLUENCE_TRACKS: InfluenceTrack[] = [
     name: "Iron Throne Track",
     description: "Determines turn order for all game actions",
     icon: "Crown",
-    image: "/img/iron-throne-track.png",
+    image: "/img/iron-throne.png",
     dominanceTokenId: "iron-throne-token",
     benefits: [
       "First in turn order for all game phases",
@@ -128,7 +128,7 @@ export const INFLUENCE_TRACKS: InfluenceTrack[] = [
     name: "Fiefdoms Track",
     description: "Determines combat tie resolution",
     icon: "Sword",
-    image: "/img/fiefdoms-track.png",
+    image: "/img/valyrian-steel-blade.png",
     dominanceTokenId: "valyrian-steel-blade",
     benefits: [
       "Higher positions win combat ties against lower positions",
@@ -142,7 +142,7 @@ export const INFLUENCE_TRACKS: InfluenceTrack[] = [
     name: "King's Court Track",
     description: "Determines available special order tokens",
     icon: "Bird",
-    image: "/img/kings-court-track.png",
+    image: "/img/messenger-raven.png",
     dominanceTokenId: "messenger-raven",
     benefits: [
       "Position determines number of special order tokens available",

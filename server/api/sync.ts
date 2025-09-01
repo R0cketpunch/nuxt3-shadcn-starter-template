@@ -40,11 +40,6 @@ export default defineEventHandler(async (event) => {
       }
 
       if (body.reset) {
-        // Clear server state on reset
-        const { setCurrentGameState, setCurrentSettings } = await import('~/server/utils/pusher');
-        setCurrentGameState(null as any);
-        setCurrentSettings(null as any);
-        
         await pusher.trigger("game-channel", "game-reset", {
           timestamp: Date.now(),
         });
