@@ -8,6 +8,7 @@
       <div
         v-for="(house, index) in houses"
         :key="house.id"
+        :data-row-index="index"
         class="grid relative grid-cols-[auto_1fr] items-center transition-all duration-200"
         :class="{
           'bg-foreground text-background':
@@ -16,12 +17,18 @@
             !isCurrentPlayerTurn(index) && showCurrentPlayer,
           'cursor-move': allowReordering,
           'cursor-pointer': !allowReordering && showCurrentPlayer,
+          'select-none': allowReordering,
+          'touch-manipulation': allowReordering,
         }"
+        :style="allowReordering ? { 'user-select': 'none', '-webkit-user-select': 'none' } : {}"
         :draggable="allowReordering"
         @click="!allowReordering && showCurrentPlayer && setCurrentPlayer()"
         @dragstart="handleDragStart($event, index)"
         @dragover="handleDragOver($event)"
         @drop="handleDrop($event, index)"
+        @touchstart="handleTouchStart($event, index)"
+        @touchmove="handleTouchMove($event)"
+        @touchend="handleTouchEnd($event)"
       >
         <!-- Position Number -->
         <div
@@ -159,6 +166,16 @@ const getStarCount = (index: number): number => {
 // Drag and drop state
 const draggedIndex = ref<number>(-1);
 
+// Touch drag state
+const touchDragState = ref({
+  isDragging: false,
+  draggedIndex: -1,
+  startY: 0,
+  currentY: 0,
+  dragElement: null as HTMLElement | null,
+  placeholder: null as HTMLElement | null,
+});
+
 // Drag and drop handlers
 const handleDragStart = (event: DragEvent, index: number) => {
   if (!props.allowReordering) return;
@@ -195,5 +212,111 @@ const handleDrop = (event: DragEvent, dropIndex: number) => {
   emit("reorder-houses", reorderedHouses);
 
   draggedIndex.value = -1;
+};
+
+// Touch event handlers for mobile drag support
+const handleTouchStart = (event: TouchEvent, index: number) => {
+  if (!props.allowReordering) return;
+
+  const touch = event.touches[0];
+  const element = event.currentTarget as HTMLElement;
+  
+  touchDragState.value = {
+    isDragging: true,
+    draggedIndex: index,
+    startY: touch.clientY,
+    currentY: touch.clientY,
+    dragElement: element,
+    placeholder: null,
+  };
+
+  // Prevent scrolling during drag
+  event.preventDefault();
+  
+  // Add visual feedback
+  element.style.transform = 'scale(1.05)';
+  element.style.zIndex = '1000';
+  element.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+};
+
+const handleTouchMove = (event: TouchEvent) => {
+  if (!touchDragState.value.isDragging || !touchDragState.value.dragElement) return;
+
+  const touch = event.touches[0];
+  const deltaY = touch.clientY - touchDragState.value.startY;
+  
+  touchDragState.value.currentY = touch.clientY;
+  
+  // Move the dragged element
+  touchDragState.value.dragElement.style.transform = `scale(1.05) translateY(${deltaY}px)`;
+  
+  // Find the element we're hovering over
+  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+  const rowElement = elementBelow?.closest('[data-row-index]') as HTMLElement;
+  
+  if (rowElement) {
+    const targetIndex = parseInt(rowElement.getAttribute('data-row-index') || '0');
+    
+    // Visual feedback for drop target
+    const allRows = document.querySelectorAll('[data-row-index]');
+    allRows.forEach(row => {
+      (row as HTMLElement).style.borderTop = '';
+      (row as HTMLElement).style.borderBottom = '';
+    });
+    
+    if (targetIndex !== touchDragState.value.draggedIndex) {
+      if (targetIndex < touchDragState.value.draggedIndex) {
+        rowElement.style.borderTop = '3px solid #3b82f6';
+      } else {
+        rowElement.style.borderBottom = '3px solid #3b82f6';
+      }
+    }
+  }
+  
+  event.preventDefault();
+};
+
+const handleTouchEnd = (event: TouchEvent) => {
+  if (!touchDragState.value.isDragging || !touchDragState.value.dragElement) return;
+
+  const touch = event.changedTouches[0];
+  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+  const rowElement = elementBelow?.closest('[data-row-index]') as HTMLElement;
+  
+  // Reset visual styles
+  touchDragState.value.dragElement.style.transform = '';
+  touchDragState.value.dragElement.style.zIndex = '';
+  touchDragState.value.dragElement.style.boxShadow = '';
+  
+  // Clear border highlights
+  const allRows = document.querySelectorAll('[data-row-index]');
+  allRows.forEach(row => {
+    (row as HTMLElement).style.borderTop = '';
+    (row as HTMLElement).style.borderBottom = '';
+  });
+  
+  if (rowElement) {
+    const targetIndex = parseInt(rowElement.getAttribute('data-row-index') || '0');
+    
+    if (targetIndex !== touchDragState.value.draggedIndex) {
+      // Perform the reorder
+      const reorderedHouses = [...props.houses];
+      const draggedHouse = reorderedHouses[touchDragState.value.draggedIndex];
+      reorderedHouses.splice(touchDragState.value.draggedIndex, 1);
+      reorderedHouses.splice(targetIndex, 0, draggedHouse);
+      
+      emit("reorder-houses", reorderedHouses);
+    }
+  }
+  
+  // Reset touch drag state
+  touchDragState.value = {
+    isDragging: false,
+    draggedIndex: -1,
+    startY: 0,
+    currentY: 0,
+    dragElement: null,
+    placeholder: null,
+  };
 };
 </script>
