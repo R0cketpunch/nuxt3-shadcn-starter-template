@@ -3,7 +3,7 @@
     <div
       class="flex col-span-1 justify-center items-center px-8 h-32 bg-background"
     >
-      <Timer class="size-12" />
+      <Timer class="size-12 text-muted-foreground" />
       <div class="text-6xl">
         <NumberFlow :value="gameState.currentRound" />
         <span class="text-2xl text-muted-foreground">
@@ -24,8 +24,8 @@
             !isPhaseComplete(index) && !isCurrentPhase(index),
         }"
       >
-        <component :is="getPhaseIconComponent(phase.id)" class="size-6" />
-        <!-- <div class="text-xl">{{ phase.name }} Phase</div> -->
+        <!-- <component :is="getPhaseIconComponent(phase.id)" class="size-6" /> -->
+        <div class="text-xl">{{ phase.name }} Phase</div>
       </div>
     </div>
 
@@ -34,7 +34,7 @@
       class="flex col-span-1 justify-center items-center px-8 h-32"
       :class="wildlingThreatColor"
     >
-      <Skull class="size-12" />
+      <Skull class="size-12 text-muted-foreground" />
       <div class="text-6xl">
         <NumberFlow :value="gameState.wildlingThreat" />
         <span class="text-2xl text-muted-foreground">
